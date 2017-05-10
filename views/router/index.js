@@ -18,7 +18,7 @@ export default new router({
           component: r => require.ensure([], () => r(require('components/home.vue')), 'home')
         },
         {
-          path:'left', //首页
+          path:'test', //首页
           component: r => require.ensure([], () => r(require('components/left.vue')), 'home')
         },
         {
