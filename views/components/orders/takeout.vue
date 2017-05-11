@@ -110,6 +110,9 @@ export default {
     handleMode(row, column) {
       return row.orderstatus;
     },
+    handleEdit(index, row) {
+      console.log(index, row);
+    },
     searchAction(){
       const startdate = timefilter(this.daterange[0], 'yyyy/mm/dd');
       const endate = timefilter(this.daterange[1], 'yyyy/mm/dd');
