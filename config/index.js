@@ -30,8 +30,8 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: [
       {
-        context: ['/data/**'],
-        target: 'http://119.23.73.39',
+        context: ['/admin/**'],
+        target: 'http://shanwei.boss.com',
         secure: false,
         changeOrigin: true
       },

@@ -1,5 +1,5 @@
 <template lang="html">
-  <el-pagination class="pagecontent" :page-size="20" :page-sizes="[20]" layout="->, sizes, prev, pager, next,  total, slot" :total="total" @current-change="handleCurrentChange"></el-pagination>
+  <el-pagination class="pagecontent" :page-size="pagesize" :page-sizes="[pagesize]" layout="->,sizes,prev,pager,next,total,slot" :total="total" :current-page="page" @current-change="handleCurrentChange"></el-pagination>
 </template>
 
 <script>
@@ -10,7 +10,7 @@ export default {
       
     }
   },
-  props: ['total', 'callback'],
+  props: ['page', 'pagesize', 'total', 'callback'],
   methods:{
     handleCurrentChange(val){
       if(this.callback && typeof this.callback == 'function'){
