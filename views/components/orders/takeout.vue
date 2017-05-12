@@ -8,12 +8,11 @@
         <el-row>
           <el-col :span="24" class="searchbox">
             选择日期范围：<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="选择日期范围" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;&nbsp;&nbsp;
-            选择时间段：<el-time-picker is-range v-model="timerange" format="HH:mm" placeholder="选择时间范围"></el-time-picker>&nbsp;&nbsp;&nbsp;&nbsp;
-            输入菜肴：<el-input class="searchinput" placeholder="菜肴名" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
+            输入店铺名：<el-input class="searchinput" placeholder="店铺名" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false" @click.stop="getOrderlist">搜索</el-button>
           </el-col>
         </el-row>
-        <el-table :data="orderlist" empty-text="暂无数据..." style="width: 100%">
+        <el-table :data="orderlist" empty-text="暂无数据..." style="width: 100%" id="loading">
           <el-table-column type="index" label="序号" width="64"></el-table-column>
           <el-table-column prop="orderid" label="订单号" width="120"></el-table-column>
           <el-table-column label="菜肴名称" width="200" class-name="noticeinfo">
@@ -21,17 +20,29 @@
           </el-table-column>
           <el-table-column prop="addtime" label="付款时间" width="176"></el-table-column>
           <el-table-column prop="allmoney" label="价格" class-name="noticeinfo" width="110"></el-table-column>
-          <el-table-column prop="recipientmobile" label="手机账号" width="130"></el-table-column>
-          <el-table-column prop="deliveryaddress" label="配送信息" :show-overflow-tooltip="true"></el-table-column>
+          <el-table-column label="配送信息" :show-overflow-tooltip="true">
+            <template scope="scope"><span v-html="scope.row.deliveryaddress"></span></template>
+          </el-table-column>
           <el-table-column prop="statustr" label="状态" width="96"></el-table-column>
           <el-table-column label="操作" width="100">
             <template scope="scope">
-              <el-button v-if="scope.row.status == 2" size="small" @click="toDeliveryOrder(scope.row.orderid)">派单配送</el-button>
+              <el-popover ref="popoverDistrip" placement="left" trigger="click" v-model="scope.row.showpopover">
+                <el-table :data="distriplist">
+                  <el-table-column property="distripname" label="配送员" width="80"></el-table-column>
+                  <el-table-column property="distripmobile" label="联系电话" width="150"></el-table-column>
+                  <el-table-column label="-" width="80">
+                    <template scope="subscope">
+                      <el-button type="primary" size="small" @click="toDeliveryOrder(subscope.row.id, scope.row)">派送</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-popover>
+              <el-button v-if="scope.row.status == 2" size="small" v-popover:popoverDistrip @click="deliveryOrder(scope.row.shopid)">派单配送</el-button>
               <span v-else>-</span>
             </template>
           </el-table-column>
         </el-table>
-        <pageComponent v-if="orderlist.length>0" :page="page" :pagesize="pagesize" :total="orderlist.length" :callback="getCurrentPage"></pageComponent>
+        <pageComponent v-if="orderlist.length>0" :page="page" :pagesize="pagesize" :total="allnum" :callback="getCurrentPage"></pageComponent>
       </el-col>
     </el-row>
   </div>
@@ -49,7 +60,6 @@ export default {
     return {
       //UI组件数据
       daterange: [new Date(new Date().getTime() - 7 * 24 * 3600 * 1000), new Date()],
-      timerange: [new Date(timefilter(new Date(), 'yyyy/mm/dd')+' 11:00:00'), new Date(timefilter(new Date(), 'yyyy/mm/dd')+' 13:00:00')],
       searchname: '',
       datePickerOptions: {
         shortcuts: [{
@@ -81,7 +91,9 @@ export default {
       //页面data数据源
       page: 1,
       pagesize: 20,
-      orderlist: []
+      allnum: 0,
+      orderlist: [],
+      distriplist: [],
     }
   },
   methods: {
@@ -89,37 +101,59 @@ export default {
       this.page = page;
       this.getOrderlist();
     },
-    toDeliveryOrder(orderid) {
-      console.log(orderid);
+    deliveryOrder(shopid) {
+      ajax.get('/admin/shop/getDistripList', {params:{shopid:shopid}}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          this.distriplist = response.data.list;
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
+    },
+    toDeliveryOrder(distripid, order){
+      ajax.get('/admin/order/deliveryOrder', {params:{distripid:distripid, orderid: order.orderid}}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          order.status = 3;
+          order.statustr = getOrderStatus(order.status);
+          order.showpopover = false;
+          this.$message.success('订单已派送');
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
     },
     //获取订单列表
     getOrderlist(){
-      const startdate = timefilter(this.daterange[0], 'yyyy/mm/dd');
-      const endate = timefilter(this.daterange[1], 'yyyy/mm/dd');
-      const startime = timefilter(this.timerange[0], 'hh:ii');
-      const endtime = timefilter(this.timerange[1], 'hh:ii');
-      const params = { startdate: startdate, endate: endate, startime: startime, endtime: endtime, page: this.page, pagesize: this.pagesize, ordertype:1 };
+      const startime = timefilter(this.daterange[0], 'yyyy/mm/dd');
+      const endtime = timefilter(this.daterange[1], 'yyyy/mm/dd');
+      const params = { startime: startime, endtime: endtime, shopname: this.searchname, page: this.page, pagesize: this.pagesize, ordertype:1 };
       ajax.get('/admin/order/getOrderlist', {params:params}).then((response) => {
         if (response.data && response.data.code > 0) {
-          this.delayLoad(response.data['list']);
+          this.delayLoad(response.data['info'], response.data['list']);
         } else {
-          console.log(response.data.msg);
+          this.$message.error(response.data.msg);
         }
       }).catch((e) => {
-        console.log(e.toString());
+        this.$message.error(e.toString());
       });
     }, 
-    delayLoad(list){
+    delayLoad(info, list){
+      this.allnum = info.allnum || list.length;
       if(list && list.length > 0){
-        if(this.page == 1) this.orderlist = [];
+        this.orderlist = [];
         for (var i = list.length - 1; i >= 0; i--) {
           let orderinfo = {};
+          orderinfo['showpopover'] = false;
+          orderinfo['shopid'] = list[i].shopid;
           orderinfo['orderid'] = list[i].orderid;
           orderinfo['orderdetail'] = this.formatOrderlist(list[i].orderlist);
           orderinfo['addtime'] = list[i].addtime?timefilter(new Date(list[i].addtime), 'yyyy/mm/dd hh:ii:ss'):'';
           orderinfo['allmoney'] = currency(list[i].allmoney);
-          orderinfo['recipientmobile'] = list[i].recipientmobile;
-          orderinfo['deliveryaddress'] = list[i].recipientname+' '+list[i].deliveryaddress;
+          orderinfo['deliveryaddress'] = list[i].recipientname+' '+list[i].recipientmobile+'<br>'+list[i].deliveryaddress;
           orderinfo['status'] = list[i].status;
           orderinfo['statustr'] = getOrderStatus(list[i].status);
           this.orderlist.push(orderinfo);
@@ -141,7 +175,7 @@ export default {
   },
   created () {
     //初始获取数据
-    this.getOrderlist()
+    this.getOrderlist();
   },
   destroyed(){
     
