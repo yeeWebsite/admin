@@ -14,7 +14,7 @@ export default new router({
         {
           name:'首页',
           path:'/', //首页
-          //redirect: 'orders',
+          redirect: 'orders',
           component: r => require.ensure([], () => r(require('components/home.vue')), 'home')
         },
         {
