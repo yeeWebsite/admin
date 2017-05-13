@@ -40,7 +40,8 @@ ajax.interceptors.request.use(function (config) {
   config.headers['Indicator.async'] = indicator.async?indicator.async:false;
   config.headers['Indicator.duration'] = indicator.duration?indicator.duration:0;
   if(!config.headers['Indicator.async']){
-    loadingInstance = Loading.service({text:'正在加载...'});
+    const target = document.getElementById('loading')?document.getElementById('loading'):document.body;
+    loadingInstance = Loading.service({target:target, text:'正在加载...'});
   }
   return config;
 }, function (error) {
