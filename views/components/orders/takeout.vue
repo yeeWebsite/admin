@@ -12,18 +12,25 @@
             <el-button type="primary" :loading="false" @click.stop="getOrderlist">搜索</el-button>
           </el-col>
         </el-row>
-        <el-table :data="orderlist" empty-text="暂无数据..." style="width: 100%" id="loading">
+        <el-table :data="orderlist"  :default-sort="{prop:'orderid',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
           <el-table-column type="index" label="序号" width="64"></el-table-column>
           <el-table-column prop="orderid" label="订单号" width="120"></el-table-column>
           <el-table-column label="菜肴名称" width="200" class-name="noticeinfo">
             <template scope="scope"><span v-html="scope.row.orderdetail"></span></template>
           </el-table-column>
-          <el-table-column prop="addtime" label="付款时间" width="176"></el-table-column>
+          <el-table-column prop="addtime" label="订单时间" width="176"></el-table-column>
           <el-table-column prop="allmoney" label="价格" class-name="noticeinfo" width="110"></el-table-column>
           <el-table-column label="配送信息" :show-overflow-tooltip="true">
             <template scope="scope"><span v-html="scope.row.deliveryaddress"></span></template>
           </el-table-column>
-          <el-table-column prop="statustr" label="状态" width="96"></el-table-column>
+          <el-table-column label="状态" width="96">
+            <template scope="scope">
+              <span v-html="scope.row.statustr"></span>
+              <el-tooltip v-if="scope.row.status == 3" :content="'配送员信息('+scope.row.deliveryinfo+')'" placement="left">
+                <i class="el-icon-warning"></i>
+              </el-tooltip>
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="100">
             <template scope="scope">
               <el-popover ref="popoverDistrip" placement="left" trigger="click" v-model="scope.row.showpopover">
@@ -32,12 +39,14 @@
                   <el-table-column property="distripmobile" label="联系电话" width="150"></el-table-column>
                   <el-table-column label="-" width="80">
                     <template scope="subscope">
-                      <el-button type="primary" size="small" @click="toDeliveryOrder(subscope.row.id, scope.row)">派送</el-button>
+                      <el-button type="primary" size="small" @click="processOrder(scope.row, 2, subscope.row)">派送</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
               </el-popover>
               <el-button v-if="scope.row.status == 2" size="small" v-popover:popoverDistrip @click="deliveryOrder(scope.row.shopid)">派单配送</el-button>
+              <el-button v-else-if="scope.row.status == 3" size="small" @click="processOrder(scope.row, 3)">配送完成</el-button>
+              <el-button v-else-if="scope.row.status == 4" size="small" @click="processOrder(scope.row, 4)">已完成</el-button>
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -112,11 +121,48 @@ export default {
         this.$message.error(e.toString());
       });
     },
-    toDeliveryOrder(distripid, order){
-      ajax.get('/admin/order/deliveryOrder', {params:{distripid:distripid, orderid: order.orderid}}).then((response) => {
+    processOrder(order, status, info = {}){
+      let params = { orderid: order.orderid, status: status };
+      let callback;
+      if(status == 2){ //已付款处理
+        const distrip = info;
+        params['distripid'] = distrip.id;
+        callback = () => {
+          order.status = 3;
+          order.statustr = getOrderStatus(order.status);
+          order.deliveryinfo = distrip.distripname+'/'+distrip.distripmobile;
+          order.showpopover = false;
+          this.$message.success('订单已派送');
+        }
+      }else if(status == 3){ //配送中处理
+        callback = () => {
+          order.status = 4;
+          order.statustr = getOrderStatus(order.status);
+          this.$message.success('订单处理完成');
+        }
+      }else if(status == 4) { //配送完成处理
+        callback = () => {
+          order.status = 100;
+          order.statustr = getOrderStatus(order.status);
+          this.$message.success('订单处理完成');
+        }
+      }
+      ajax.get('/admin/order/processOrder', {params:params}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          if(callback) callback();
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
+    },
+    toDeliveryOrder(distrip, order){
+      ajax.get('/admin/order/deliveryOrder', {params:{distripid:distrip.id, orderid: order.orderid}}).then((response) => {
         if (response.data && response.data.code > 0) {
           order.status = 3;
           order.statustr = getOrderStatus(order.status);
+          order.deliveryinfo = distrip.distripname+'/'+distrip.distripmobile;
           order.showpopover = false;
           this.$message.success('订单已派送');
         } else {
@@ -153,6 +199,7 @@ export default {
           orderinfo['orderdetail'] = this.formatOrderlist(list[i].orderlist);
           orderinfo['addtime'] = list[i].addtime?timefilter(new Date(list[i].addtime), 'yyyy/mm/dd hh:ii:ss'):'';
           orderinfo['allmoney'] = currency(list[i].allmoney);
+          orderinfo['deliveryinfo'] = list[i].deliveryname+'/'+list[i].deliverymobie;
           orderinfo['deliveryaddress'] = list[i].recipientname+' '+list[i].recipientmobile+'<br>'+list[i].deliveryaddress;
           orderinfo['status'] = list[i].status;
           orderinfo['statustr'] = getOrderStatus(list[i].status);
