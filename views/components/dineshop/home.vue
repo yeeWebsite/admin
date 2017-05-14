@@ -15,12 +15,12 @@
               <img :src="scope.row.shopicon" alt="" style="width: 60px;height: 60px;padding: 10px 0;"/>
             </template>
           </el-table-column>
-          <el-table-column prop="shopname" label="店铺名称" width="200"></el-table-column>
+          <el-table-column prop="shopname" label="店铺名称" width="180"></el-table-column>
           <el-table-column prop="shopdesc" label="描述" :show-overflow-tooltip="true"></el-table-column>
           <el-table-column :formatter="handleAway" label="可否外卖" width="100"></el-table-column>
-          <el-table-column prop="shophone" label="联系电话" width="160"></el-table-column>
+          <el-table-column prop="shophone" label="联系电话" width="150"></el-table-column>
           <el-table-column prop="address" label="详细地址" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="opentime" label="营业时间" width="140"></el-table-column>
+          <el-table-column prop="opentime" label="营业时间" width="130"></el-table-column>
           <el-table-column label="操作" width="200">
             <template scope="scope">
               <el-button size="small" @click="handleEdit(scope.$index, scope.row)">修改</el-button>
@@ -29,6 +29,7 @@
             </template>
           </el-table-column>
         </el-table>
+        <pageComponent :total="21" :callback="getCurrentPage"></pageComponent>
       </el-col>
     </el-row>
   </div>
@@ -78,7 +79,7 @@ export default {
   },
   methods: {
     addAction(){
-      this.$router.push('/');
+      this.$router.push('/dineshop/detail/');
     },
     handleAway(row, column){
       return row.isaway === '1' ? '是': '否';
@@ -91,6 +92,9 @@ export default {
     },
     handleDelete(index, row) {
       console.log(index, row);
+    },
+    getCurrentPage(page){
+      console.log(page);
     },
   },
   computed: {

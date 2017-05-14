@@ -28,7 +28,12 @@ export default new router({
             {
               name:'门店列表',
               path:'/', //门店列表
-              component: r => require.ensure([], () => r(require('components/dineshop/home.vue')), 'dineshop')
+              component: r => require.ensure([], () => r(require('components/dineshop/home.vue')), 'dineshop'),
+            },
+            {
+              name:'门店信息新增/修改',
+              path:'detail', //门店列表
+              component: r => require.ensure([], () => r(require('components/dineshop/home-detail.vue')), 'dineshop'),
             },
             {
               name:'放号管理',
