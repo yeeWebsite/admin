@@ -30,7 +30,14 @@
         size="tiny"
         :before-close="handleClose">
       <span>退款批准时长，退款申请后</span>
-      <selected :options="dataoptions" class="el-data-select"></selected>
+      <el-select class="el-data-select" v-model="value" placeholder="请选择">
+        <el-option
+            v-for="item in dataoptions"
+            :key="item.label"
+            :label="item.value"
+            :value="item.value">
+        </el-option>
+      </el-select>
       <span slot="footer" class="dialog-footer">
                   <el-button @click="dialogVisible = false">取 消</el-button>
                   <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
@@ -82,6 +89,7 @@ export default {
         value: '3天',
         label: '4'
       }],
+      value: '',
     }
   },
   methods: {
@@ -109,7 +117,6 @@ export default {
     leftComponent: require('components/left.vue'),
     breadtitleComponent: require('components/breadtitle.vue'),
     pageComponent: require('components/page.vue'),
-    selected: require('components/select.vue'),
   },
   watch: {
     

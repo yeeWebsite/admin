@@ -16,7 +16,15 @@
                   :visible.sync="dialogVisible"
                   size="tiny"
                   :before-close="handleClose">
-                店铺选择 <selected :options="dataoptions" class="el-data-select"></selected><br/>
+                店铺选择
+                <el-select class="el-data-select" v-model="shopvalue" placeholder="请选择">
+                  <el-option
+                      v-for="item in dataoptions"
+                      :key="item.label"
+                      :label="item.value"
+                      :value="item.value">
+                  </el-option>
+                </el-select><br/>
                 日期筛选 <el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="left" placeholder="选择日期范围"></el-date-picker>
                 <span slot="footer" class="dialog-footer">
                   <el-button @click="dialogVisible = false">取 消</el-button>
@@ -76,6 +84,7 @@ export default {
         label: '4'
       }],
       daterange: [new Date(new Date().getTime() - 7 * 24 * 3600 * 1000), new Date()],
+      shopvalue: '',
     }
   },
   methods: {
@@ -103,7 +112,6 @@ export default {
     leftComponent: require('components/left.vue'),
     breadtitleComponent: require('components/breadtitle.vue'),
     pageComponent: require('components/page.vue'),
-    selected: require('components/select.vue'),
   },
   watch: {
     
