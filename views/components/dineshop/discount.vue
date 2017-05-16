@@ -8,7 +8,7 @@
         <!-- 页面输入内容 -->
         <el-row class="discount-shop-name">门店：{{shopinfo.shopname}}</el-row>
         <el-row type="flex" justify="end">
-          <el-button style="margin:-10px 10px 10px 0;" type="primary" :loading="false" @click.stop="editordialogvisible=true">编辑时间段</el-button>
+          <el-button style="margin:-10px 10px 10px 0;" type="primary" :loading="false" @click.stop="showTimeslot()">编辑时间段</el-button>
         </el-row>
         <el-tabs v-model="activename" @tab-click="handleClick">
           <el-tab-pane label="菜肴管理" name="food"></el-tab-pane>
@@ -36,7 +36,7 @@
       <div style="max-height: 300px;overflow: auto">
         <el-row class="editor-dialog-row" v-for="(item,index) in timesoltlist">
           <span>{{item.timeslot}}</span>
-          <span class="text-button" @click.stop="deleteTimeSlot(index)">删除</span>
+          <span class="text-button" @click.stop="deleteTimeSlot(item.id)">删除</span>
         </el-row>
       </div>
       <span class="editor-dialog-add-btn" @click.stop="addtimeslotdialogvisible=true">新增时间段</span>
@@ -134,6 +134,7 @@
 <script>
 import { ajax } from "@/libs/ajax"
 import { mapGetters, mapActions } from 'vuex'
+import { timefilter } from "@/filters/timefilter"
 
 export default {
   data() {
@@ -578,7 +579,10 @@ export default {
       adddiscountdata:{
         name:'',
         discount:''
-      }
+      },
+
+
+      timesoltlist: [],
     }
   },
   methods: {
@@ -610,6 +614,22 @@ export default {
       console.log('关闭弹窗');
       done();
     },
+    showTimeslot(){
+      this.editordialogvisible = true;
+      this.timesoltlist = [];
+      ajax.get('/admin/shop/getDiscountTimeslot', {params:{ indicator:{async: true} }}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          for (var i = 0; i < response.data.list.length; i++) {
+            let timeslot = response.data.list[i];
+            this.timesoltlist.push({id: timeslot.id, timeslot: timeslot.startime.slice(0,5)+'-'+timeslot.endtime.slice(0,5)});
+          }
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
+    },
     addTimeSlot(){
       this.addtimeslotdialogvisible = false;
       this.timesoltlist.push({
@@ -619,11 +639,10 @@ export default {
         timeslot:this.addtimeslot.starttime + '-' + this.addtimeslot.endtime
       });
     },
-    deleteTimeSlot(index){
-      this.deletetimeslot.push(index);
-//      delete this.timesoltlist[index];
-      this.timesoltlist.splice(index, 1)
-      console.log(JSON.stringify(this.timesoltlist))
+    deleteTimeSlot(id){
+      for (var i = 0; i < this.timesoltlist.length; i++) {
+        if(this.timesoltlist[i].id == id) this.timesoltlist.splice(i,1);
+      }
     },
   },
   computed: {
@@ -638,15 +657,6 @@ export default {
         });
       };
       return date;
-    },
-    timesoltlist(){
-      let time=[];
-      for(let i=0;this.shopdata[i];i++){
-        time.push({
-          timeslot:this.shopdata[i].timeslot
-        });
-      };
-      return time;
     }
   },
   created () {
