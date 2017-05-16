@@ -8,7 +8,7 @@
         <!-- 页面输入内容 -->
         <el-row class="discount-shop-name">门店：{{shopinfo.shopname}}</el-row>
         <el-row type="flex" justify="end">
-          <el-button style="margin:-10px 10px 10px 0;" type="primary" :loading="false" @click.stop="showTimeslot()">编辑时间段</el-button>
+          <el-button style="margin:-10px 10px 10px 0;" type="primary" @click.stop="showTimeslot()">编辑时间段</el-button>
         </el-row>
         <el-tabs v-model="activename" @tab-click="handleClick">
           <el-tab-pane label="菜肴管理" name="food"></el-tab-pane>
@@ -41,8 +41,7 @@
       </div>
       <span class="editor-dialog-add-btn" @click.stop="addtimeslotdialogvisible=true">新增时间段</span>
       <span slot="footer" class="dialog-footer">
-        <el-button @click.stop="editordialogvisible = false">取 消</el-button>
-        <el-button type="primary" @click.stop="confirmTimeSlot">确 定</el-button>
+        <el-button type="primary" @click.stop="confirmTimeSlot()">确 定</el-button>
       </span>
     </el-dialog>
     <el-dialog
@@ -109,6 +108,7 @@
             start: '00:00',
             step: '01:00',
             end: '23:00',
+            maxTime: addtimeslot.endtime
           }">
         </el-time-select>
         <el-time-select
@@ -125,7 +125,7 @@
       </el-row>
       <span slot="footer" class="dialog-footer">
         <el-button @click.stop="addtimeslotdialogvisible = false">取 消</el-button>
-        <el-button type="primary" @click.stop="addTimeSlot">确 定</el-button>
+        <el-button type="primary" @click.stop="addTimeSlot()">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -146,425 +146,8 @@ export default {
         shopaddress: "中银花园1号楼B-8（中银大厦旁）"
       },
       activename: 'discount',
-      shopdata:[
-       {
-          timeslot: "10:00-11:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "11:00-12:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "12:00-13:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[
-               {
-                  id: "3",
-                  dishesid: "3",
-                  dishesname: "外婆菜",
-                  type: "1",
-                  disnum: "0.40",
-                  addtime: "2017-05-14 18:04:25"
-                }
-              ]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "13:00-14:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "14:00-15:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "15:00-16:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[
-               {
-                  id: "4",
-                  dishesid: "4",
-                  dishesname: "红烧鱼块",
-                  type: "1",
-                  disnum: "0.50",
-                  addtime: "2017-05-14 18:04:26"
-                }
-              ]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[
-               {
-                  id: "8",
-                  dishesid: "1",
-                  dishesname: "葱香油焖大虾",
-                  type: "2",
-                  disnum: "0.90",
-                  addtime: "2017-05-14 18:04:36"
-                }
-              ]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "16:00-17:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[
-               {
-                  id: "5",
-                  dishesid: "5",
-                  dishesname: "绝味炒田螺",
-                  type: "1",
-                  disnum: "0.60",
-                  addtime: "2017-05-14 18:04:29"
-                }
-              ]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "17:00-18:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[
-               {
-                  id: "6",
-                  dishesid: "6",
-                  dishesname: "干锅啤酒鸭",
-                  type: "1",
-                  disnum: "0.70",
-                  addtime: "2017-05-14 18:04:32"
-                }
-              ]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "18:00-19:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[
-               {
-                  id: "7",
-                  dishesid: "7",
-                  dishesname: "凉拌牛肉",
-                  type: "1",
-                  disnum: "0.80",
-                  addtime: "2017-05-14 18:04:34"
-                }
-              ]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "19:00-20:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        },
-       {
-          timeslot: "20:00-21:00",
-          discountdata:[
-           {
-              date: "2017-05-16",
-              discount:[]
-            },
-           {
-              date: "2017-05-17",
-              discount:[]
-            },
-           {
-              date: "2017-05-18",
-              discount:[]
-            },
-           {
-              date: "2017-05-19",
-              discount:[]
-            },
-           {
-              date: "2017-05-20",
-              discount:[]
-            },
-           {
-              date: "2017-05-21",
-              discount:[]
-            },
-           {
-              date: "2017-05-22",
-              discount:[]
-            }
-          ]
-        }
-      ],
+      shopdata: [],
+      datelist: [],
       editordialogvisible: false,
       discountdialogvisible: false,
       adddialogvisible: false,
@@ -574,15 +157,12 @@ export default {
         starttime:'',
         endtime:''
       },
-      addedtimeslot:[],
-      deletetimeslot:[],
       adddiscountdata:{
         name:'',
         discount:''
       },
-
-
       timesoltlist: [],
+      discountdishlist:[],
     }
   },
   methods: {
@@ -591,24 +171,19 @@ export default {
     },
     confirmTimeSlot() {
       this.editordialogvisible = false;
-      let item = {};
-      for(let i=0;this.addedtimeslot[i];i++){
-        item.timeslot = this.addedtimeslot[i].timeslot;
-        item.discountdata = [];
-        for(let j=0;this.datelist[j];j++){
-          item.discountdata.push({
-            date: this.datelist[j].date,
-            discount:[]
-          });
+      this.shopdata = [];
+      ajax.get('/admin/shop/getDineshopDiscount', {params:{ shopid:this.shopinfo.shopid}}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          this.shopdata = response.data.list;
+        } else {
+          this.$message.error(response.data.msg);
         }
-        this.shopdata.push(item);
-      };
-      this.addedtimeslot = [];
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
     },
     toDetailDiscount(data,index){
-      let discountdata = data.discountdata[index].discount;
-      console.log(JSON.stringify(discountdata));
-
+      data.discountdata[index].discount.length ? this.discountdialogvisible=true : this.inputdialogvisible=true
     },
     handleClose(done) {
       console.log('关闭弹窗');
@@ -617,6 +192,7 @@ export default {
     showTimeslot(){
       this.editordialogvisible = true;
       this.timesoltlist = [];
+      this.datelist = [];
       ajax.get('/admin/shop/getDiscountTimeslot', {params:{ indicator:{async: true} }}).then((response) => {
         if (response.data && response.data.code > 0) {
           for (var i = 0; i < response.data.list.length; i++) {
@@ -631,39 +207,59 @@ export default {
       });
     },
     addTimeSlot(){
-      this.addtimeslotdialogvisible = false;
-      this.timesoltlist.push({
-        timeslot:this.addtimeslot.starttime + '-' + this.addtimeslot.endtime
-      });
-      this.addedtimeslot.push({
-        timeslot:this.addtimeslot.starttime + '-' + this.addtimeslot.endtime
+      ajax.get('/admin/shop/addDiscountTimeslot', {params:{ startime:this.addtimeslot.starttime,endtime:this.addtimeslot.endtime}}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          let slotid = response.data.info.slotid;
+          this.timesoltlist.push({id: slotid,timeslot:this.addtimeslot.starttime+'-'+this.addtimeslot.endtime});
+          this.addtimeslotdialogvisible = false;
+          this.addtimeslot.starttime = this.addtimeslot.endtime = '';
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
       });
     },
     deleteTimeSlot(id){
-      for (var i = 0; i < this.timesoltlist.length; i++) {
-        if(this.timesoltlist[i].id == id) this.timesoltlist.splice(i,1);
-      }
+      ajax.get('/admin/shop/delDiscountTimeslot', {params:{ slotid:id}}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          for (var i = 0; i < this.timesoltlist.length; i++) {
+            if(this.timesoltlist[i].id == id) this.timesoltlist.splice(i,1);
+          }
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
     },
   },
   computed: {
     ...mapGetters({
 
     }),
-    datelist() {
-      let date= [];
-      for(let i=0;this.shopdata[0].discountdata[i];i++){
-        date.push({
-          date:this.shopdata[0].discountdata[i].date
-        });
-      };
-      return date;
-    }
   },
   created () {
     
   },
   destroyed(){
     
+  },
+  mounted(){
+    ajax.get('/admin/shop/getDineshopDiscount', {params:{ shopid:this.shopinfo.shopid}}).then((response) => {
+      if (response.data && response.data.code > 0) {
+        this.shopdata = response.data.list;
+        for(let i=0;this.shopdata[0].discountdata[i];i++){
+          this.datelist.push({
+            date:this.shopdata[0].discountdata[i].date
+          });
+        };
+      } else {
+        this.$message.error(response.data.msg);
+      }
+    }).catch((e) => {
+      this.$message.error(e.toString());
+    });
   },
   components: {
     headerComponent: require('components/header.vue'),

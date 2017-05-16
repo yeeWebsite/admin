@@ -6,83 +6,38 @@
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
         <!-- 页面输入内容 -->
-        <el-form ref="dishesform" :model="dishesform" label-width="80px" label-position="right">
-          <el-form-item label="菜肴名称">
-            <el-input v-model="dishesform.name"></el-input>
-          </el-form-item>
-          <el-form-item label="菜肴图片">
-            <el-upload
-                :multiple="false"
-                action="https://jsonplaceholder.typicode.com/posts/"
-                :on-preview="handlePreview"
-                :on-remove="handleRemove"
-                :file-list="fileList"
-                list-type="picture-card">
-              <el-button size="small" type="primary">点击上传</el-button>
-              <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-            </el-upload>
-          </el-form-item>
-          <el-form-item label="菜肴描述">
-            <el-input type="textarea" v-model="dishesform.desc"></el-input>
-          </el-form-item>
-          <el-form-item label="口味分类">
-            <el-tag
-                class="tastetag"
-                :key="tag"
-                v-for="tag in dynamicTags"
-                :closable="true"
-                :close-transition="false"
-                @close="handleCloseTag(tag)"
-            >
-              {{tag}}
-            </el-tag>
-            <el-input
-                class="input-new-tag"
-                v-if="taginputvisible"
-                v-model="taginputvalue"
-                ref="saveTagInput"
-                size="small"
-                @keyup.enter.native="handleInputConfirm"
-                @blur="handleInputConfirm(tag)"
-            >
-            </el-input>
-            <el-button v-else @click="showInput">+ 添加</el-button>
-          </el-form-item>
-          <el-form-item label="菜肴分类">
-            <el-select v-model="firstdishclassify" placeholder="一级分类">
-              <el-option
-                  v-for="item in dishesform.firstclassifylist"
-                  :label="item.label"
-                  :value="item.value">
-              </el-option>
-            </el-select>
-            <el-select v-model="seconddishclassify" clearable placeholder="二级分类">
-              <el-option
-                  v-for="item in dishesform.secondclassifylist"
-                  :label="item.label"
-                  :value="item.value">
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="所属店铺">
-            <el-select v-model="dishshop" placeholder="请选择">
-              <el-option
-                  v-for="item in dishesform.shoplist"
-                  :label="item.label"
-                  :value="item.value">
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="价格">
-            <el-input v-model="dishesform.price" class="inlineinput">
-              <template slot="append">元</template>
-            </el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-button>返回</el-button>
-            <el-button type="primary" @click="onSubmit">提交</el-button>
-          </el-form-item>
-        </el-form>
+        <el-row class="discount-shop-name">门店：{{shopinfo.shopname}}</el-row>
+        <el-row type="flex" justify="end">
+          <el-button style="margin:-10px 10px 10px 0;" type="primary" @click.stop="dishesClassify()">菜肴分类管理</el-button>
+          <el-button style="margin:-10px 10px 10px 30px;" type="primary" @click.stop="addDishes()">新增</el-button>
+        </el-row>
+        <el-table :data="disheslist" style="width: 100%">
+          <el-table-column type="index" label="序号" width="64"></el-table-column>
+          <el-table-column label="菜肴图标" width="100">
+            <template scope="scope">
+              <img :src="scope.row.icon" alt="" style="width: 60px;height: 60px;padding: 10px 0;"/>
+            </template>
+          </el-table-column>
+          <el-table-column prop="dishesname" label="菜肴名称" width="120"></el-table-column>
+          <el-table-column prop="cuisinename" label="一级分类" width="94"></el-table-column>
+          <el-table-column prop="classifyname" label="二级分类" width="120"></el-table-column>
+          <el-table-column prop="dishtastes" label="口味种类" width="140"></el-table-column>
+          <el-table-column prop="dishesdesc" label="描述" :show-overflow-tooltip="true"></el-table-column>
+          <el-table-column label="店铺名称" width="120">
+            <template scope="scope">
+              <span>{{shopinfo.shopname}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="price" label="价格" width="120"></el-table-column>
+          <el-table-column prop="discount" label="默认折扣" width="64"></el-table-column>
+          <el-table-column label="操作" width="150">
+            <template scope="scope">
+              <el-button size="small" @click="handleEdit(scope.$index, scope.row)">修改</el-button>
+              <el-button size="small" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <pageComponent :total="21" :callback="getCurrentPage"></pageComponent>
       </el-col>
     </el-row>
   </div>
@@ -95,91 +50,55 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   data() {
     return {
-      dishesform: {
-        name: '',
-        desc: '',
-        price: '',
-        shoplist:[
-          {
-            value: '选项1',
-            label: 'aaa'
-          },
-          {
-            value: '选项2',
-            label: 'bbb'
-          },
-          {
-            value: '选项3',
-            label: 'ccc'
-          },
-        ],
-        firstclassifylist:[
-          {
-            value: '111',
-            label: '111'
-          },
-          {
-            value: '222',
-            label: '222'
-          },
-          {
-            value: '333',
-            label: '333'
-          },
-        ],
-        secondclassifylist:[
-          {
-            value: 'aaa',
-            label: 'aaa'
-          },
-          {
-            value: 'bbb',
-            label: 'bbb'
-          },
-          {
-            value: 'ccc',
-            label: 'ccc'
-          },
-        ]
+      shopinfo:{
+        shopid: "1",
+        shopname: "深运潮州粥",
+        shopicon: "http://p1.meituan.net/200.0/deal/15c8885d14f18774938a88752f08bb1e49194.jpg@118_0_466_466a%7C267h_267w_2e_90Q",
+        shopaddress: "中银花园1号楼B-8（中银大厦旁）"
       },
-      fileList: [{
-        name: 'food.jpeg',
-        url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'
-      }],
-      dishshop:'',
-      firstdishclassify:'',
-      seconddishclassify:'',
-      taginputvisible: false,
-      taginputvalue: '',
-      dynamicTags: ['辣'],
+      disheslist: [
+        {
+          id: '1',
+          icon: "https://img.meituan.net/100.100.90/wmproduct/712a233b4018a100bdf7a668132ab49386611.jpg",
+          dishesname: "葱香油焖大虾",
+          price: "88.0000",
+          classifyname: "招牌推荐",
+          cuisinename: "鲁菜",
+
+          dishtastes: '微辣、辣、超辣',
+          dishesdesc: '好吃的油焖大虾',
+          discount:'3',
+        },
+        {
+          id: '11',
+          icon: "https://img.meituan.net/100.100.90/wmproduct/712a233b4018a100bdf7a668132ab49386611.jpg",
+          dishesname: "葱香油焖大虾",
+          price: "88.0000",
+          classifyname: "招牌推荐",
+          cuisinename: "鲁菜",
+
+          dishtastes: '微辣、辣、超辣',
+          dishesdesc: '好吃的油焖大虾',
+          discount:'3',
+        },
+      ]
     }
   },
   methods: {
-    onSubmit() {
-      console.log('submit!');
+    dishesClassify(){
+      console.log("菜肴分类管理");
     },
-    handleRemove(file, fileList) {
-      console.log(file, fileList);
+    addDishes(){
+      console.log("新增");
     },
-    handlePreview(file) {
-      console.log(file);
+    handleEdit(){
+      console.log('修改');
     },
-    handleCloseTag(tag) {
-      this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1);
+    handleDelete(){
+      console.log('删除');
     },
-    showInput() {
-      this.taginputvisible = true;
-      this.$nextTick(_ => {
-        this.$refs.saveTagInput.$refs.input.focus();
-      });
-    },
-    handleInputConfirm() {
-      let inputValue = this.taginputvalue;
-      if (inputValue) {
-        this.dynamicTags.push(inputValue);
-      }
-      this.taginputvisible = false;
-      this.taginputvalue = '';
+    getCurrentPage(page){
+      console.log(page);
     },
   },
   computed: {
@@ -197,6 +116,7 @@ export default {
     headerComponent: require('components/header.vue'),
     leftComponent: require('components/left.vue'),
     breadtitleComponent: require('components/breadtitle.vue'),
+    pageComponent: require('components/page.vue'),
   },
   watch: {
     
@@ -205,6 +125,5 @@ export default {
 </script>
 
 <style type="text/css">
-  .input-new-tag{display: inline-block!important;width: auto;}
-  .tastetag{margin: 0 5px;}
+
 </style>

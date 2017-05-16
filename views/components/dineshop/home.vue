@@ -10,7 +10,7 @@
         </el-row>
         <el-table :data="shoplist" style="width: 100%">
           <el-table-column type="index" label="序号" width="64"></el-table-column>
-          <el-table-column prop="orderid" label="店铺图标" width="120">
+          <el-table-column label="店铺图标" width="120">
             <template scope="scope">
               <img :src="scope.row.shopicon" alt="" style="width: 60px;height: 60px;padding: 10px 0;"/>
             </template>
