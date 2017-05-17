@@ -39,14 +39,14 @@
                   <el-table-column property="distripmobile" label="联系电话" width="150"></el-table-column>
                   <el-table-column label="-" width="80">
                     <template scope="subscope">
-                      <el-button type="primary" size="small" @click="processOrder(scope.row, 2, subscope.row)">派送</el-button>
+                      <el-button type="primary" size="small" @click.stop="processOrder(scope.row, 2, subscope.row)">派送</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
               </el-popover>
-              <el-button v-if="scope.row.status == 2" size="small" v-popover:popoverDistrip @click="deliveryOrder(scope.row.shopid)">派单配送</el-button>
-              <el-button v-else-if="scope.row.status == 3" size="small" @click="processOrder(scope.row, 3)">配送完成</el-button>
-              <el-button v-else-if="scope.row.status == 4" size="small" @click="processOrder(scope.row, 4)">已完成</el-button>
+              <el-button v-if="scope.row.status == 2" size="small" v-popover:popoverDistrip @click.stop="deliveryOrder(scope.row.shopid)">派单配送</el-button>
+              <el-button v-else-if="scope.row.status == 3" size="small" @click.stop="processOrder(scope.row, 3)">配送完成</el-button>
+              <el-button v-else-if="scope.row.status == 4" size="small" @click.stop="processOrder(scope.row, 4)">已完成</el-button>
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -150,21 +150,6 @@ export default {
       ajax.get('/admin/order/processOrder', {params:params}).then((response) => {
         if (response.data && response.data.code > 0) {
           if(callback) callback();
-        } else {
-          this.$message.error(response.data.msg);
-        }
-      }).catch((e) => {
-        this.$message.error(e.toString());
-      });
-    },
-    toDeliveryOrder(distrip, order){
-      ajax.get('/admin/order/deliveryOrder', {params:{distripid:distrip.id, orderid: order.orderid}}).then((response) => {
-        if (response.data && response.data.code > 0) {
-          order.status = 3;
-          order.statustr = getOrderStatus(order.status);
-          order.deliveryinfo = distrip.distripname+'/'+distrip.distripmobile;
-          order.showpopover = false;
-          this.$message.success('订单已派送');
         } else {
           this.$message.error(response.data.msg);
         }

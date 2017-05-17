@@ -44,6 +44,11 @@ export default new router({
               name:'折扣管理',
               path:'discount', //折扣管理
               component: r => require.ensure([], () => r(require('components/dineshop/discount.vue')), 'dineshop')
+            },
+            {
+              name:'桌型管理',
+              path:'deskinfo', //折扣管理
+              component: r => require.ensure([], () => r(require('components/dineshop/deskinfo.vue')), 'dineshop')
             }
           ]
         },
