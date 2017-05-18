@@ -1,5 +1,5 @@
 <template lang="html">
-  <el-menu :router="true" :default-active="defaultActive" :default-openeds="['orders','money']">
+  <el-menu :router="true" :default-active="defaultActive" :default-openeds="['dineshop','orders','money']">
     <el-menu-item index="/">管理首页</el-menu-item>
     <el-submenu index="dineshop">
       <template slot="title">门店管理</template>
