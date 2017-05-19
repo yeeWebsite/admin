@@ -6,19 +6,48 @@
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
         <!-- 页面输入内容 -->
+        <el-row class="discount-shop-name">门店：{{shopname?shopname:'-'}}</el-row>
+        <el-row type="flex">
+          <el-col :span="24" class="searchbox">
+            输入店铺ID：<el-input class="searchinput" placeholder="店铺ID" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
+            <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
+            <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="addDeskinfo()">新增桌型</el-button>
+          </el-col>
+        </el-row>
         <el-table :data="desklist"  :default-sort="{prop:'orderid',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
           <el-table-column type="index" label="序号" width="120"></el-table-column>
-          <el-table-column prop="deskid" label="桌型ID"></el-table-column>
-          <el-table-column prop="deskname" label="桌型名称"></el-table-column>
+          <el-table-column prop="id" label="桌型ID"></el-table-column>
+          <el-table-column label="桌型名称">
+            <template scope="scope">
+              <span>{{scope.row.seatnum}}人桌</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="desknum" label="放号数量"></el-table-column>
-
           <el-table-column label="操作" width="200">
             <template scope="scope">
-              <el-button size="small"  @click.stop="">修改</el-button>
-              <el-button size="small" @click.stop="">删除</el-button>
+              <el-button size="small"  @click.stop="modDeskinfo(scope.row)">修改</el-button>
+              <el-button size="small" @click.stop="delDeskinfo(scope.row.id)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
+        <!-- dialog弹层 -->
+        <el-dialog class="discount-dialog" :title="dialog.dialogtitle" :visible.sync="dialog.showdialog" size="tiny" :close-on-click-modal="false">
+          <div class="deskinfoDialog">
+            <el-form ref="shopform" :model="dialog.data" label-width="80px" label-position="right">
+              <el-form-item label="就餐人数">
+                <el-input v-model="dialog.data.seatnum" class="inlineinput">
+                  <template slot="append">人桌</template>
+                </el-input>
+              </el-form-item>
+              <el-form-item label="桌型数量">
+                <el-input v-model="dialog.data.desknum" class="inlineinput"></el-input>
+              </el-form-item>
+            </el-form>
+          </div>
+          <span slot="footer" class="dialog-footer">
+            <el-button size="small" type="primary" @click.stop="processDeskinfo()">确 定</el-button>
+          </span>
+        </el-dialog>
       </el-col>
     </el-row>
   </div>
@@ -31,16 +60,101 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   data() {
     return {
-      desklist:[
-        {deskid: 1, deskname: 2, desknum: 20},
-        {deskid: 2, deskname: 3, desknum: 30},
-        {deskid: 3, deskname: 4, desknum: 40},
-        {deskid: 4, deskname: 5, desknum: 50}
-      ]
+      shopid: '1',
+      shopname: '',
+      desklist:[],
+      dialog:{
+        showdialog: false,
+        dialogtitle: 'sss',
+        data:{
+          id: "",
+          seatnum: "",
+          desknum: ""
+        }
+      }
     }
   },
   methods: {
-    
+    //搜索店铺
+    searchDineshop(){
+      this.getDesklist();
+    },
+    //获取店铺桌型列表信息
+    getDesklist(){
+      if(this.shopid){
+        ajax.get('/admin/shop/getDesklist', {params:{ shopid:this.shopid }}).then((response) => {
+          if (response.data && response.data.code > 0) {
+            const info = response.data.info;
+            const list = response.data.list;
+            this.shopname = info.shopname;
+            this.desklist = list;
+          } else {
+            this.$message.error(response.data.msg);
+          }
+        }).catch((e) => {
+          this.$message.error(e.toString());
+        });
+      }
+    },
+    //添加桌型信息
+    addDeskinfo(){
+      this.dialog.showdialog = true;
+      this.dialog.dialogtitle = '添加桌型';
+      this.dialog.data.seatnum = "";
+      this.dialog.data.desknum = "";
+      ajax.get('/admin/shop/addDesk', {params:{ shopid:this.shopid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum }}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          const deskid = response.data.info.deskid;
+          this.desklist.push({
+            id: deskid,
+            shopid: this.shopid,
+            seatnum: this.dialog.data.seatnum,
+            desknum: this.dialog.data.desknum
+          });
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
+    },
+    //修改桌型信息
+    modDeskinfo(deskinfo){
+      this.dialog.showdialog = true;
+      this.dialog.dialogtitle = '修改桌型';
+      this.dialog.data = {
+        id: deskinfo.id,
+        seatnum: deskinfo.seatnum,
+        desknum: deskinfo.desknum,
+      };
+    },
+    //删除桌型信息
+    delDeskinfo(deskid){
+      this.$confirm('删除的桌型信息将不可恢复，是否继续？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        closeOnClickModal: false,
+        callback: (action) => {
+          if(action == 'confirm'){
+            ajax.get('/admin/shop/delDesk', {params:{ deskid:deskid }}).then((response) => {
+              if (response.data && response.data.code > 0) {
+                for (var i = 0; i < this.desklist.length; i++) {
+                  if(this.desklist[i].id == deskid){
+                    this.desklist.splice(i,1); 
+                    break;
+                  }
+                }
+              } else {
+                this.$message.error(response.data.msg);
+              }
+            }).catch((e) => {
+              this.$message.error(e.toString());
+            });
+          }
+        }
+      });
+    }
   },
   computed: {
     ...mapGetters({
@@ -48,7 +162,7 @@ export default {
     }),
   },
   created () {
-    
+    this.searchDineshop();
   },
   destroyed(){
     
@@ -65,5 +179,6 @@ export default {
 </script>
 
 <style type="text/css">
-  
+.deskinfoDialog{max-height: 300px;overflow: auto}
+.deskinfoDialog .el-form-item__content{width: 180px;}
 </style>

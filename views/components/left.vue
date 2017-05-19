@@ -7,6 +7,7 @@
         <el-menu-item index="/dineshop/">门店列表</el-menu-item>
         <el-menu-item index="/dineshop/sellinfo/">放号管理</el-menu-item>
         <el-menu-item index="/dineshop/discount/">折扣管理</el-menu-item>
+        <el-menu-item index="/dineshop/deskinfo/">桌型管理</el-menu-item>
       </el-menu-item-group>
       <el-menu-item-group index="" title="菜肴管理">
         <el-menu-item index="/food/dishes/">菜肴信息</el-menu-item>
@@ -36,12 +37,12 @@ export default {
       defaultActive:''
     }
   },
-  props: [],
+  props: ['path'],
   methods:{
     
   },
   created(){
-    this.defaultActive = this.$route.path;
+    this.defaultActive = this.path?this.path:this.$route.path;
     console.log(this.$route);
   },
   computed: {

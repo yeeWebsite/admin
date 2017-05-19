@@ -6,40 +6,36 @@
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
         <!-- 页面输入内容 -->
-        <el-row class="discount-shop-name">门店：{{shopname}}</el-row>
-        <el-row type="flex" justify="end">
-          <el-button style="margin:-10px 10px 10px 0;" type="primary" @click.stop="showTimeslot()">编辑时间段</el-button>
+        <el-row class="discount-shop-name">门店：{{shopname?shopname:'-'}}</el-row>
+        <el-row type="flex">
+          <el-col :span="24" class="searchbox">
+            输入店铺ID：<el-input class="searchinput" placeholder="店铺ID" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
+            <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
+            <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="showTimeslot()">编辑时间段</el-button>
+          </el-col>
         </el-row>
-        <el-tabs v-model="activename" @tab-click="handleClick">
-          <el-tab-pane label="菜肴管理" name="food"></el-tab-pane>
-          <el-tab-pane label="放号管理" name="sell"></el-tab-pane>
-          <el-tab-pane label="折扣管理" name="discount">
-            <el-table :data="shopdata" style="width: 100%" class="discount-table">
-              <el-table-column prop="timeslot" label="时间段\日期"></el-table-column>
-              <el-table-column v-for="(item, index) in this.datelist" :label="item.date">
-                <template scope="scope">
-                  <el-badge :value="scope.row.discountdata[index].discount.length" class="item" v-if="scope.row.discountdata[index].discid">
-                    <el-button size="small" @click.stop="toDetailDiscount(scope.row,index)">查看</el-button>
-                  </el-badge>
-                  <el-badge v-else class="item">
-                    <el-button size="small" @click.stop="toDetailDiscount(scope.row,index)">新增</el-button>
-                  </el-badge>
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-tab-pane>
-          <el-tab-pane label="桌型管理" name="table"></el-tab-pane>
-        </el-tabs>
+        <el-table :data="shopdata" style="width: 100%" class="discount-table" id="loading">
+          <el-table-column prop="timeslot" label="时间段\日期"></el-table-column>
+          <el-table-column v-for="(item, index) in this.datelist" :label="item.date">
+            <template scope="scope">
+              <el-badge :value="scope.row.discountdata[index].discount.length" class="item" v-if="scope.row.discountdata[index].discid">
+                <el-button size="small" @click.stop="toDetailDiscount(scope.row,index)">查看</el-button>
+              </el-badge>
+              <el-badge v-else class="item">
+                <el-button size="small" @click.stop="toDetailDiscount(scope.row,index)">新增</el-button>
+              </el-badge>
+            </template>
+          </el-table-column>
+        </el-table>
       </el-col>
     </el-row>
-    
     <el-dialog class="discount-dialog" title="折扣信息" :visible.sync="discountdialogvisible"
         size="tiny"
         :close-on-click-modal="false">
       <el-row class="discount-dialog-row">
         <span>{{currentdate.replace(/-/g, '/')}} ({{currenttimeslot.timeslot}})</span>
         <span class="text-button" size="small" style="float: right;" @click.stop="discountdialogvisible=false; modifydialogvisible=true;">编辑</span>
-        <span class="text-button" size="small" style="float: right; margin-right: 10px;" @click.stop="discountdialogvisible=false;inputdialogvisible=true;">新增</span>
+        <span class="text-button" size="small" style="float: right; margin-right: 10px;" @click.stop="discountdialogvisible=false; inputdialogvisible=true;">新增</span>
       </el-row>
       <el-table :data="currentdiscountdishlist.discountdishlist">
         <el-table-column prop="dishname" label="菜品名称" align="center"></el-table-column>
@@ -118,7 +114,7 @@ import { timefilter } from "@/filters/timefilter"
 export default {
   data() {
     return {
-      shopid: "1",
+      shopid: "",
       shopname: "",
       shopdishlist: [],
       activename: 'discount',
@@ -149,53 +145,62 @@ export default {
     }
   },
   methods: {
+    //搜索店铺
+    searchDineshop(){
+      this.getDineshopInfo();
+      this.getDineshopDiscount();
+    },
     //获取店铺信息
     getDineshopInfo(){
-      ajax.get('/admin/shop/getDineshopInfo', {params:{ shopid:this.shopid}}).then((response) => {
-        if (response.data && response.data.code > 0) {
-          const info = response.data.info;
-          this.shopname = info.shopname;
-          this.shopdishlist = info.disheslist;
-        } else {
-          this.$message.error(response.data.msg);
-        }
-      }).catch((e) => {
-        this.$message.error(e.toString());
-      });
+      if(this.shopid){
+        ajax.get('/admin/shop/getDineshopInfo', {params:{ shopid:this.shopid, indicator:{async:true} }}).then((response) => {
+          if (response.data && response.data.code > 0) {
+            const info = response.data.info;
+            this.shopname = info.shopname;
+            this.shopdishlist = info.disheslist;
+          } else {
+            this.$message.error(response.data.msg);
+          }
+        }).catch((e) => {
+          this.$message.error(e.toString());
+        });
+      }
     },
     //获取折扣信息
     getDineshopDiscount(){
-      ajax.get('/admin/shop/getDineshopDiscount', {params:{ shopid:this.shopid}}).then((response) => {
-        if (response.data && response.data.code > 0) {
-          this.shopdata = response.data.list;
-          this.datelist = [];
-          for(let i=0;this.shopdata[0].discountdata[i];i++){
-            this.datelist.push({
-              date:this.shopdata[0].discountdata[i].date
-            });
-          };
-          //解析折扣字段信息
-          const discount = {};
-          for (var i = 0; i < this.shopdata.length; i++) {
-            const info = this.shopdata[i];
-            for (var j = 0; j < info.discountdata.length; j++) {
-              const data = info.discountdata[j];
-              if(data.discid){
-                discount[info.slotid+'|'+data.date] = {
-                  "discid": data.discid,
-                  "discount": data.discount,
+      if(this.shopid){
+        ajax.get('/admin/shop/getDineshopDiscount', {params:{ shopid:this.shopid}}).then((response) => {
+          if (response.data && response.data.code > 0) {
+            this.shopdata = response.data.list;
+            this.datelist = [];
+            for(let i=0;this.shopdata[0].discountdata[i];i++){
+              this.datelist.push({
+                date:this.shopdata[0].discountdata[i].date
+              });
+            };
+            //解析折扣字段信息
+            const discount = {};
+            for (var i = 0; i < this.shopdata.length; i++) {
+              const info = this.shopdata[i];
+              for (var j = 0; j < info.discountdata.length; j++) {
+                const data = info.discountdata[j];
+                if(data.discid){
+                  discount[info.slotid+'|'+data.date] = {
+                    "discid": data.discid,
+                    "discount": data.discount,
+                  }
                 }
               }
             }
+            this.discount = discount;
+            console.log(this.discount);
+          } else {
+            this.$message.error(response.data.msg);
           }
-          this.discount = discount;
-          console.log(this.discount);
-        } else {
-          this.$message.error(response.data.msg);
-        }
-      }).catch((e) => {
-        this.$message.error(e.toString());
-      });
+        }).catch((e) => {
+          this.$message.error(e.toString());
+        });
+      }
     },
     handleClick(tab, event) {
       console.log(tab, event);
@@ -359,10 +364,7 @@ export default {
     }),
   },
   created () {
-    //获取店铺信息
-    this.getDineshopInfo();
-    //获取店铺折扣信息
-    this.getDineshopDiscount();
+
   },
   destroyed(){
     
