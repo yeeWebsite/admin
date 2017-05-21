@@ -12,7 +12,7 @@
             <el-button type="primary" :loading="false" @click.stop="getOrderlist">搜索</el-button>
           </el-col>
         </el-row>
-        <el-table :data="orderlist"  :default-sort="{prop:'orderid',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
+        <el-table :data="orderlist" :default-sort="{prop:'orderid',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
           <el-table-column type="index" label="序号" width="64"></el-table-column>
           <el-table-column prop="orderid" label="订单号" width="120"></el-table-column>
           <el-table-column label="菜肴名称" width="200" class-name="noticeinfo">

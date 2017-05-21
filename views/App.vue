@@ -9,4 +9,5 @@
 .noticeinfo{color:#FF4949;}
 .searchbox{padding:10px 6px;margin-bottom: 10px;background-color: #f2f2f2; }
 .searchbox .searchinput{width: 200px;}
+.discount-shop-name{padding: 6px;}
 </style>

@@ -6,15 +6,15 @@
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
         <!-- 页面输入内容 -->
-        <el-row class="discount-shop-name">门店：{{shopname?shopname:'-'}}</el-row>
         <el-row type="flex">
           <el-col :span="24" class="searchbox">
             输入店铺ID：<el-input class="searchinput" placeholder="店铺ID" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
+            <span style="margin-left:20px;">门店：{{shopname?shopname:'-'}}</span>
             <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="addDeskinfo()">新增桌型</el-button>
           </el-col>
         </el-row>
-        <el-table :data="desklist"  :default-sort="{prop:'orderid',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
+        <el-table :data="desklist"  :default-sort="{prop:'seatnum',order:'ascending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
           <el-table-column type="index" label="序号" width="120"></el-table-column>
           <el-table-column prop="id" label="桌型ID"></el-table-column>
           <el-table-column label="桌型名称">
@@ -33,19 +33,19 @@
         <!-- dialog弹层 -->
         <el-dialog class="discount-dialog" :title="dialog.dialogtitle" :visible.sync="dialog.showdialog" size="tiny" :close-on-click-modal="false">
           <div class="deskinfoDialog">
-            <el-form ref="shopform" :model="dialog.data" label-width="80px" label-position="right">
-              <el-form-item label="就餐人数">
-                <el-input v-model="dialog.data.seatnum" class="inlineinput">
+            <el-form ref="deskform" :model="dialog.data" :rules="rules" label-width="80px" label-position="right">
+              <el-form-item label="就餐人数" prop="seatnum">
+                <el-input v-model.number="dialog.data.seatnum" auto-complete="off" class="inlineinput">
                   <template slot="append">人桌</template>
                 </el-input>
               </el-form-item>
-              <el-form-item label="桌型数量">
-                <el-input v-model="dialog.data.desknum" class="inlineinput"></el-input>
+              <el-form-item label="桌型数量" prop="desknum">
+                <el-input v-model.number="dialog.data.desknum" class="inlineinput"></el-input>
               </el-form-item>
             </el-form>
           </div>
           <span slot="footer" class="dialog-footer">
-            <el-button size="small" type="primary" @click.stop="processDeskinfo()">确 定</el-button>
+            <el-button size="small" type="primary" @click.stop="processDeskinfo('deskform')">确 定</el-button>
           </span>
         </el-dialog>
       </el-col>
@@ -71,7 +71,18 @@ export default {
           seatnum: "",
           desknum: ""
         }
+      },
+      rules:{
+        seatnum: [
+          { required: true, message: '请输入就餐人数', trigger: 'blur' },
+          { type: 'number', message: '就餐人数必须为数字值', trigger: 'blur'}
+        ],
+        desknum: [
+          { required: true, message: '请输入桌型数量', trigger: 'blur' },
+          { type: 'number', message: '桌型数量必须为数字值', trigger: 'blur'}
+        ]
       }
+
     }
   },
   methods: {
@@ -102,31 +113,58 @@ export default {
       this.dialog.dialogtitle = '添加桌型';
       this.dialog.data.seatnum = "";
       this.dialog.data.desknum = "";
-      ajax.get('/admin/shop/addDesk', {params:{ shopid:this.shopid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum }}).then((response) => {
-        if (response.data && response.data.code > 0) {
-          const deskid = response.data.info.deskid;
-          this.desklist.push({
-            id: deskid,
-            shopid: this.shopid,
-            seatnum: this.dialog.data.seatnum,
-            desknum: this.dialog.data.desknum
-          });
-        } else {
-          this.$message.error(response.data.msg);
-        }
-      }).catch((e) => {
-        this.$message.error(e.toString());
-      });
     },
     //修改桌型信息
     modDeskinfo(deskinfo){
       this.dialog.showdialog = true;
       this.dialog.dialogtitle = '修改桌型';
+      console.log(deskinfo);
       this.dialog.data = {
         id: deskinfo.id,
         seatnum: deskinfo.seatnum,
         desknum: deskinfo.desknum,
       };
+    },
+    processDeskinfo(deskform){
+      this.$refs[deskform].validate((valid) => {
+        if (valid) {
+          let url = '/admin/shop/addDesk';
+          let params = {shopid:this.shopid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum};
+          let fn = (data) => {
+            this.desklist.push({
+              id: data.info.deskid,
+              shopid: this.shopid,
+              seatnum: this.dialog.data.seatnum,
+              desknum: this.dialog.data.desknum
+            });
+          }
+          if(this.dialog.data.id){
+            url = '/admin/shop/modDesk';
+            params = {deskid:this.dialog.data.id, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum};
+            fn = (data) => {
+              for (var i = 0; i < this.desklist.length; i++) {
+                if(this.desklist[i].id == this.dialog.data.id){
+                  this.desklist[i].seatnum = this.dialog.data.seatnum;
+                  this.desklist[i].desknum = this.dialog.data.desknum;
+                  break;
+                }
+              }
+            }
+          }
+          ajax.get(url, {params:params}).then((response) => {
+            if (response.data && response.data.code > 0) {
+              fn(response.data);
+              this.dialog.showdialog = false;
+            } else {
+              this.$message.error(response.data.msg);
+            }
+          }).catch((e) => {
+            this.$message.error(e.toString());
+          });
+        } else {
+          return false;
+        }
+      });
     },
     //删除桌型信息
     delDeskinfo(deskid){

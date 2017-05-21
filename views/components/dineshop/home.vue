@@ -5,31 +5,47 @@
       <el-col :span="4"><leftComponent></leftComponent></el-col>
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
-        <el-row type="flex" justify="end">
-          <el-button style="margin:-10px 10px 10px 0;" type="primary" :loading="false" @click.stop="addAction">新增</el-button>
+        <el-row type="flex">
+          <el-col :span="24" class="searchbox">
+            <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="addDineshop()">新增门店</el-button>
+          </el-col>
         </el-row>
-        <el-table :data="shoplist" style="width: 100%">
+        <el-table :data="shoplist" :default-sort="{prop:'addtime',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
           <el-table-column type="index" label="序号" width="64"></el-table-column>
-          <el-table-column label="店铺图标" width="120">
+          <el-table-column label="店铺图标" width="90">
             <template scope="scope">
               <img :src="scope.row.shopicon" alt="" style="width: 60px;height: 60px;padding: 10px 0;"/>
             </template>
           </el-table-column>
-          <el-table-column prop="shopname" label="店铺名称" width="180"></el-table-column>
-          <el-table-column prop="shopdesc" label="描述" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column :formatter="handleAway" label="可否外卖" width="100"></el-table-column>
-          <el-table-column prop="shophone" label="联系电话" width="150"></el-table-column>
-          <el-table-column prop="address" label="详细地址" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="opentime" label="营业时间" width="130"></el-table-column>
-          <el-table-column label="操作" width="200">
+          <el-table-column label="店铺名称" width="180">
             <template scope="scope">
-              <el-button size="small" @click="handleEdit(scope.$index, scope.row)">修改</el-button>
-              <el-button size="small" @click="handleManage(scope.$index, scope.row)">管理</el-button>
-              <el-button size="small" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+              <router-link :to="{path:'/dineshop/detail/',query:{shopid:scope.row.shopid}}">{{scope.row.shopname}}</router-link>
+            </template>
+          </el-table-column>
+          <el-table-column label="可否预订/外卖" width="126">
+            <template scope="scope"><span class="noticeinfo">{{scope.row.isbooking==1?"是":"否"}}</span>&nbsp;|&nbsp;<span class="noticeinfo">{{scope.row.isaway==1?"是":"否"}}</span></template>
+          </el-table-column>
+          <el-table-column label="营业/配送时间" :show-overflow-tooltip="true">
+            <template scope="scope">
+              <span>{{scope.row.opentime}}<br/>{{scope.row.deliverytime}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="联系方式" :show-overflow-tooltip="true">
+            <template scope="scope">
+              <span>{{scope.row.shophone}}<br/>{{scope.row.address}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="店铺状态" width="120" class-name="noticeinfo">
+            <template scope="scope"><span>{{getShopstatus(scope.row.status)}}</span></template>
+          </el-table-column>
+          <el-table-column label="操作" width="140">
+            <template scope="scope">
+              <el-button size="small" @click="modDineshop(scope.row)">修改</el-button>
+              <el-button size="small" type="danger" v-if="scope.row.status == 100" @click="delDineshop(scope.$index, scope.row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
-        <pageComponent :total="21" :callback="getCurrentPage"></pageComponent>
+        <pageComponent :page="page" :pagesize="pagesize" :total="allnum" :callback="getCurrentPage"></pageComponent>
       </el-col>
     </el-row>
   </div>
@@ -42,59 +58,90 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   data() {
     return {
+      page: 1, //页数
+      pagesize: 20, //每页显示数
+      allnum: 0, //总记录数
       //页面data数据源
-      shoplist: [
-        {
-          sid: '201705100001',
-          shopname: '深运潮州粥',
-          shopdesc: '非常好吃',
-          shopicon: 'http://p1.meituan.net/200.0/deal/15c8885d14f18774938a88752f08bb1e49194.jpg@118_0_466_466a%7C267h_267w_2e_90Q',
-          shophone: '0755-28635923',
-          address: '中银花园1号楼B-8（中银大厦旁）',
-          isaway: '1',
-          opentime: '10:00-23:00',
-        },
-        {
-          sid: '201705100002',
-          shopname: '深运潮州粥',
-          shopdesc: '非常好吃',
-          shopicon: 'http://p1.meituan.net/200.0/deal/15c8885d14f18774938a88752f08bb1e49194.jpg@118_0_466_466a%7C267h_267w_2e_90Q',
-          shophone: '0755-28635923',
-          address: '中银花园1号楼B-8（中银大厦旁）',
-          isaway: '1',
-          opentime: '10:00-23:00',
-        },
-        {
-          sid: '201705100003',
-          shopname: '深运潮州粥',
-          shopdesc: '非常好吃',
-          shopicon: 'http://p1.meituan.net/200.0/deal/15c8885d14f18774938a88752f08bb1e49194.jpg@118_0_466_466a%7C267h_267w_2e_90Q',
-          shophone: '0755-28635923',
-          address: '中银花园1号楼B-8（中银大厦旁）',
-          isaway: '1',
-          opentime: '10:00-23:00',
-        },
-      ]
+      shoplist: []
     }
   },
   methods: {
-    addAction(){
+    //新增店铺跳转
+    addDineshop(){
       this.$router.push('/dineshop/detail/');
     },
-    handleAway(row, column){
-      return row.isaway === '1' ? '是': '否';
+    //修改店铺信息
+    modDineshop(info){
+      this.$router.push({path:'/dineshop/detail/', query:{shopid: info.shopid}});
     },
-    handleEdit(index, row) {
-      console.log(index, row);
+    //删除店铺跳转
+    delDineshop(shopid){
+      this.$confirm('请谨慎操作，删除的门店信息将不可恢复，是否继续？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        closeOnClickModal: false,
+        callback: (action) => {
+          if(action == 'confirm'){
+            console.log(2222);
+          }
+        }
+      });
     },
-    handleManage(index, row) {
-      console.log(index, row);
+    //获取当前店铺状态 店铺状态（0初始，1审核中，100审核通过，-100审核不通过，-300已下架）
+    getShopstatus(status){
+      let statustr = '等待审核';
+      if(status == 1){
+        statustr = '审核中';
+      }else if(status == 100){
+        statustr = '审核通过';
+      }else if(status == -100){
+        statustr = '审核不通过';
+      }else if(status == -300){
+        statustr = '已下架';
+      }
+      return statustr;
     },
-    handleDelete(index, row) {
-      console.log(index, row);
+    //获取门店列表
+    getShoplist(){
+      const params = { page: this.page, pagesize: this.pagesize };
+      ajax.get('/admin/shop/getDineshopList', {params:params}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          this.delayLoad(response.data['info'], response.data['list']);
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
+    }, 
+    delayLoad(info, list){
+      this.allnum = info.allnum || list.length;
+      if(list && list.length > 0){
+        this.shoplist = [];
+        for (var i = list.length - 1; i >= 0; i--) {
+          let shopinfo = {
+            shopid: list[i].id,
+            userid: list[i].userid,
+            adduser: list[i].adduser,
+            status: list[i].status,
+            shopname: list[i].shopname,
+            shopicon: list[i].shopicon,
+            shophone: list[i].shophone,
+            address: list[i].address,
+            isbooking: list[i].isbooking,
+            opentime: list[i].opentime,
+            isaway: list[i].isaway,
+            deliverytime: list[i].deliverytime,
+            addtime: list[i].addtime
+          };
+          this.shoplist.push(shopinfo);
+        }
+      }
     },
     getCurrentPage(page){
-      console.log(page);
+      this.page = page;
+      this.getShoplist();
     },
   },
   computed: {
@@ -103,7 +150,8 @@ export default {
     }),
   },
   created () {
-    
+    //获取店铺列表
+    this.getShoplist();
   },
   destroyed(){
     

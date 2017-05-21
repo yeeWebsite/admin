@@ -7,64 +7,54 @@
       </el-col>
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
-        <el-form ref="shopform" :model="shopform" label-width="80px" label-position="right">
-          <el-form-item label="店铺名称">
-            <el-input v-model="shopform.name"></el-input>
-          </el-form-item>
-          <el-form-item label="店铺图标">
-            <el-upload
-                :multiple="false"
-                action="https://jsonplaceholder.typicode.com/posts/"
-                :on-preview="handlePreview"
-                :on-remove="handleRemove"
-                :file-list="fileList"
-                list-type="picture-card">
-              <el-button size="small" type="primary">点击上传</el-button>
-              <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-            </el-upload>
+        <el-form :rules="rules" ref="dineshopform" :model="shopinfo" label-width="120px" label-position="right">
+          <el-form-item label="店铺名称" prop="shopname">
+            <el-input v-model="shopinfo.shopname"></el-input>
           </el-form-item>
           <el-form-item label="店铺描述">
-            <el-input type="textarea" v-model="shopform.desc"></el-input>
+            <el-input type="textarea" v-model="shopinfo.shopdesc"></el-input>
           </el-form-item>
-          <el-form-item label="餐位费">
-            <el-input v-model="shopform.price" class="inlineinput">
+          <el-form-item label="店铺图标" prop="shopicon">
+            <el-upload :multiple="false" action="https://jsonplaceholder.typicode.com/posts/" :on-preview="handlePreview" :on-remove="handleRemove" :file-list="fileList" list-type="picture-card">
+              <el-button size="small" type="primary">点击上传</el-button>
+              <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500KB</div>
+            </el-upload>
+          </el-form-item>
+          <el-form-item label="菜系" prop="cuisineid">
+            <el-select v-model="shopinfo.cuisineid" placeholder="请选择菜系">
+              <el-option v-for="cuisine in cuisinelist" :key="cuisine.id" :label="cuisine.cuisinename" :value="cuisine.id"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="经纬度坐标">
+            <el-input v-model="shopinfo.maplon" placeholder="经度坐标" style="width:120px"></el-input>
+            <el-input v-model="shopinfo.maplat" placeholder="纬度坐标" style="width:120px"></el-input>
+          </el-form-item>
+          <el-form-item label="店铺基本信息">
+            <el-input v-model="shopinfo.sales" placeholder="月销量" style="width:120px"></el-input>
+            <el-input v-model="shopinfo.preconsume" placeholder="人均消费" class="inlineinput">
               <template slot="append">元/人</template>
             </el-input>
           </el-form-item>
+          <el-form-item label="可否预订">
+            <el-switch on-text="" off-text="" v-model="shopinfo.isbooking" on-value="1" off-value="0"></el-switch>
+          </el-form-item>
           <el-form-item label="可否外卖">
-            <el-radio-group v-model="shopform.takeout" class="radiogroup">
-              <el-radio label="0">否</el-radio>
-              <el-radio label="1">是</el-radio>
-            </el-radio-group>
-            <el-input v-show="shopform.takeout == '1'" v-model="shopform.takeoutprice" class="inlineinput">
-              <template slot="append">元</template>
-            </el-input>
+            <el-switch on-text="" off-text="" v-model="shopinfo.isaway" on-value="1" off-value="0" style="margin-right:10px;"></el-switch>
+            <el-input v-show="shopinfo.isaway == '1'" v-model="shopinfo.deliveryfee" placeholder="配送费" class="inlineinput"><template slot="append">元</template></el-input>
+            <el-input v-show="shopinfo.isaway == '1'" v-model="shopinfo.minprice" placeholder="最低配送金额" class="inlineinput"><template slot="append">元</template></el-input>
           </el-form-item>
-          <el-form-item label="所属区域">
-            <el-cascader
-                class="districtcascader"
-                :options="districtoptions"
-                v-model="selecteddistrictoptions"
-                @change="handleDistrictChange">
-            </el-cascader>
+          <el-form-item label="营业时间" prop="opentime">
+            <el-time-picker is-range v-model="shopinfo.opentime" format="HH:mm" placeholder="选择时间范围"></el-time-picker>
           </el-form-item>
-          <el-form-item label="详细地址">
-            <el-input type="textarea" v-model="shopform.detailaddress"></el-input>
+          <el-form-item label="联系电话" prop="shophone">
+            <el-input v-model="shopinfo.shophone" style="width:192px;"></el-input>
           </el-form-item>
-          <el-form-item label="营业时间">
-            <el-time-picker
-                is-range
-                v-model="shopform.businesstime"
-                format="HH:mm"
-                placeholder="选择时间范围">
-            </el-time-picker>
-          </el-form-item>
-          <el-form-item label="联系电话">
-            <el-input v-model="shopform.phone" class="inlineinput"></el-input>
+          <el-form-item label="详细地址" prop="address">
+            <el-input type="textarea" v-model="shopinfo.address"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button>返回</el-button>
-            <el-button type="primary" @click="onSubmit">提交</el-button>
+            <router-link to="/dineshop/" style="margin-right:15px;text-decoration:none;color:#48576a;">返回</router-link>
+            <el-button type="primary" @click="addDineshop('dineshopform')">提交</el-button>
           </el-form-item>
         </el-form>
       </el-col>
@@ -79,240 +69,78 @@
   export default {
     data() {
       return {
+        //菜系列表
+        cuisinelist:[],
         //页面data数据源
         takeoutpricevisible: false,
-        shopform: {
-          name: '',
-          desc: '',
-          price: '',
-          takeout: '0',
-          takeoutprice: '',
-          detailaddress:'',
-          businesstime:'',
-          phone:''
+
+        shopinfo: {
+          shopname: '', //店铺名称
+          shopdesc: '', //店铺描述
+          shopicon: '', //店铺图标
+          cuisineid: '', //菜系ID
+          maplon:'', //经度坐标
+          maplat:'', //纬度坐标
+          sales:'', //月销量
+          deliveryfee:'', //配送费
+          minprice:'', //最低配送金额
+          preconsume:'', //人均消费
+          isbooking:1, //是否可预订
+          isaway:1, //是否支持外卖
+          opentime:'', //营业时间
+          shophone:'', //联系电话
+          address: '', //店铺地址 
+        },
+        rules: {
+          shopname: [{ required: true, message: '请输入店铺名称', trigger: 'blur' }],
+          shopicon: [{ required: true, message: '请先上传店铺图标', trigger: 'blur' }],
+          cuisineid: [{ required: true, message: '请选择菜系', trigger: 'blur' }],
+          opentime: [{ type:'date', required: true, message: '请选择营业时间', trigger: 'change' }],
+          shophone: [{ required: true, message: '请输入店铺联系电话', trigger: 'blur' }],
+          address: [{ required: true, message: '请输入店铺地址', trigger: 'blur' }],
         },
         fileList: [{
           name: 'food.jpeg',
           url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'
         }],
-        districtoptions: [
-          {
-            value: 'zhinan',
-            label: '指南',
-            children: [{
-              value: 'shejiyuanze',
-              label: '设计原则',
-              children: [{
-                value: 'yizhi',
-                label: '一致'
-              }, {
-                value: 'fankui',
-                label: '反馈'
-              }, {
-                value: 'xiaolv',
-                label: '效率'
-              }, {
-                value: 'kekong',
-                label: '可控'
-              }]
-            }, {
-              value: 'daohang',
-              label: '导航',
-              children: [{
-                value: 'cexiangdaohang',
-                label: '侧向导航'
-              }, {
-                value: 'dingbudaohang',
-                label: '顶部导航'
-              }]
-            }]
-          }, {
-            value: 'zujian',
-            label: '组件',
-            children: [{
-              value: 'basic',
-              label: 'Basic',
-              children: [{
-                value: 'layout',
-                label: 'Layout 布局'
-              }, {
-                value: 'color',
-                label: 'Color 色彩'
-              }, {
-                value: 'typography',
-                label: 'Typography 字体'
-              }, {
-                value: 'icon',
-                label: 'Icon 图标'
-              }, {
-                value: 'button',
-                label: 'Button 按钮'
-              }]
-            }, {
-              value: 'form',
-              label: 'Form',
-              children: [{
-                value: 'radio',
-                label: 'Radio 单选框'
-              }, {
-                value: 'checkbox',
-                label: 'Checkbox 多选框'
-              }, {
-                value: 'input',
-                label: 'Input 输入框'
-              }, {
-                value: 'input-number',
-                label: 'InputNumber 计数器'
-              }, {
-                value: 'select',
-                label: 'Select 选择器'
-              }, {
-                value: 'cascader',
-                label: 'Cascader 级联选择器'
-              }, {
-                value: 'switch',
-                label: 'Switch 开关'
-              }, {
-                value: 'slider',
-                label: 'Slider 滑块'
-              }, {
-                value: 'time-picker',
-                label: 'TimePicker 时间选择器'
-              }, {
-                value: 'date-picker',
-                label: 'DatePicker 日期选择器'
-              }, {
-                value: 'datetime-picker',
-                label: 'DateTimePicker 日期时间选择器'
-              }, {
-                value: 'upload',
-                label: 'Upload 上传'
-              }, {
-                value: 'rate',
-                label: 'Rate 评分'
-              }, {
-                value: 'form',
-                label: 'Form 表单'
-              }]
-            }, {
-              value: 'data',
-              label: 'Data',
-              children: [{
-                value: 'table',
-                label: 'Table 表格'
-              }, {
-                value: 'tag',
-                label: 'Tag 标签'
-              }, {
-                value: 'progress',
-                label: 'Progress 进度条'
-              }, {
-                value: 'tree',
-                label: 'Tree 树形控件'
-              }, {
-                value: 'pagination',
-                label: 'Pagination 分页'
-              }, {
-                value: 'badge',
-                label: 'Badge 标记'
-              }]
-            }, {
-              value: 'notice',
-              label: 'Notice',
-              children: [{
-                value: 'alert',
-                label: 'Alert 警告'
-              }, {
-                value: 'loading',
-                label: 'Loading 加载'
-              }, {
-                value: 'message',
-                label: 'Message 消息提示'
-              }, {
-                value: 'message-box',
-                label: 'MessageBox 弹框'
-              }, {
-                value: 'notification',
-                label: 'Notification 通知'
-              }]
-            }, {
-              value: 'navigation',
-              label: 'Navigation',
-              children: [{
-                value: 'menu',
-                label: 'NavMenu 导航菜单'
-              }, {
-                value: 'tabs',
-                label: 'Tabs 标签页'
-              }, {
-                value: 'breadcrumb',
-                label: 'Breadcrumb 面包屑'
-              }, {
-                value: 'dropdown',
-                label: 'Dropdown 下拉菜单'
-              }, {
-                value: 'steps',
-                label: 'Steps 步骤条'
-              }]
-            }, {
-              value: 'others',
-              label: 'Others',
-              children: [{
-                value: 'dialog',
-                label: 'Dialog 对话框'
-              }, {
-                value: 'tooltip',
-                label: 'Tooltip 文字提示'
-              }, {
-                value: 'popover',
-                label: 'Popover 弹出框'
-              }, {
-                value: 'card',
-                label: 'Card 卡片'
-              }, {
-                value: 'carousel',
-                label: 'Carousel 走马灯'
-              }, {
-                value: 'collapse',
-                label: 'Collapse 折叠面板'
-              }]
-            }]
-          }, {
-            value: 'ziyuan',
-            label: '资源',
-            children: [{
-              value: 'axure',
-              label: 'Axure Components'
-            }, {
-              value: 'sketch',
-              label: 'Sketch Templates'
-            }, {
-              value: 'jiaohu',
-              label: '组件交互文档'
-            }]
-          }],
         selecteddistrictoptions: [],
       }
     },
     methods: {
-      onSubmit() {
-        console.log('submit!');
+      addDineshop(form) {
+        this.$refs[form].validate((valid) => {
+          if (valid) {
+            console.log('submit!');
+          }else {
+            return false;
+          }
+        });
       },
-      handleRemove(file, fileList) {
-        console.log(file, fileList);
+      //获取菜系列表
+      getCuisinelist(){
+        ajax.get('/admin/shop/getCuisineList', { params: { indicator:{async:true} } }).then((response) => {
+          if (response.data && response.data.code > 0) {
+            this.cuisinelist = response.data.list;
+          } else {
+            this.$message.error(response.data.msg);
+          }
+        }).catch((e) => {
+          this.$message.error(e.toString());
+        });
       },
-      handlePreview(file) {
-        console.log(file);
+      handlePreview(){
+
       },
-      handleDistrictChange(value) {
-        console.log(value);
+      handleRemove(){
+
       }
     },
     computed: {
       ...mapGetters({}),
     },
     created () {
-
+      //获取菜系列表
+      this.getCuisinelist();
     },
     destroyed(){
 

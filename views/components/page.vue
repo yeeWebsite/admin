@@ -19,7 +19,9 @@ export default {
     }
   },
   created(){
-    
+    if(!this.page) this.page = 1;
+    if(!this.pagesize) this.pagesize = 20;
+    if(!this.total) this.total = 0;
   },
   computed: {
     ...mapGetters({
