@@ -30,7 +30,7 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: [
       {
-        context: ['/admin/**'],
+        context: ['/admin/**','/public/**','/upload/**'],
         target: 'http://boss.yee.website',
         secure: false,
         changeOrigin: true

@@ -15,7 +15,7 @@
             <el-input type="textarea" v-model="shopinfo.shopdesc"></el-input>
           </el-form-item>
           <el-form-item label="店铺图标" prop="shopicon">
-            <el-upload :multiple="false" action="https://jsonplaceholder.typicode.com/posts/" :on-preview="handlePreview" :on-remove="handleRemove" :file-list="fileList" list-type="picture-card">
+            <el-upload action="/admin/upload/images" :multiple="false" name="file" :file-list="filelist" :on-success="uploadSuccess" list-type="picture-card">
               <el-button size="small" type="primary">点击上传</el-button>
               <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500KB</div>
             </el-upload>
@@ -30,8 +30,8 @@
             <el-input v-model="shopinfo.maplat" placeholder="纬度坐标" style="width:120px"></el-input>
           </el-form-item>
           <el-form-item label="店铺基本信息">
-            <el-input v-model="shopinfo.sales" placeholder="月销量" style="width:120px"></el-input>
-            <el-input v-model="shopinfo.preconsume" placeholder="人均消费" class="inlineinput">
+            月销量：<el-input v-model="shopinfo.sales" placeholder="月销量" style="width:120px"></el-input>
+            人均消费：<el-input v-model="shopinfo.preconsume" placeholder="人均消费" class="inlineinput">
               <template slot="append">元/人</template>
             </el-input>
           </el-form-item>
@@ -40,10 +40,10 @@
           </el-form-item>
           <el-form-item label="可否外卖">
             <el-switch on-text="" off-text="" v-model="shopinfo.isaway" on-value="1" off-value="0" style="margin-right:10px;"></el-switch>
-            <el-input v-show="shopinfo.isaway == '1'" v-model="shopinfo.deliveryfee" placeholder="配送费" class="inlineinput"><template slot="append">元</template></el-input>
-            <el-input v-show="shopinfo.isaway == '1'" v-model="shopinfo.minprice" placeholder="最低配送金额" class="inlineinput"><template slot="append">元</template></el-input>
+            配送费：<el-input v-show="shopinfo.isaway == '1'" v-model="shopinfo.deliveryfee" placeholder="配送费" class="inlineinput"><template slot="append">元</template></el-input>&nbsp;&nbsp;
+            起送金额：<el-input v-show="shopinfo.isaway == '1'" v-model="shopinfo.minprice" placeholder="最低配送金额" class="inlineinput"><template slot="append">元</template></el-input>
           </el-form-item>
-          <el-form-item label="营业时间" prop="opentime">
+          <el-form-item label="营业时间" prop="opentime" required>
             <el-time-picker is-range v-model="shopinfo.opentime" format="HH:mm" placeholder="选择时间范围"></el-time-picker>
           </el-form-item>
           <el-form-item label="联系电话" prop="shophone">
@@ -65,6 +65,7 @@
 <script>
   import {ajax} from "@/libs/ajax"
   import {mapGetters, mapActions} from 'vuex'
+  import { timefilter } from "@/filters/timefilter"
 
   export default {
     data() {
@@ -73,12 +74,12 @@
         cuisinelist:[],
         //页面data数据源
         takeoutpricevisible: false,
-
         shopinfo: {
+          shopid: '', //店铺ID
           shopname: '', //店铺名称
           shopdesc: '', //店铺描述
           shopicon: '', //店铺图标
-          cuisineid: '', //菜系ID
+          cuisineid: '1', //菜系ID
           maplon:'', //经度坐标
           maplat:'', //纬度坐标
           sales:'', //月销量
@@ -87,7 +88,7 @@
           preconsume:'', //人均消费
           isbooking:1, //是否可预订
           isaway:1, //是否支持外卖
-          opentime:'', //营业时间
+          opentime: [timefilter(new Date, 'yyyy-mm-dd ')+'09:00:00', timefilter(new Date, 'yyyy-mm-dd ')+'23:00:00' ], //营业时间
           shophone:'', //联系电话
           address: '', //店铺地址 
         },
@@ -95,22 +96,87 @@
           shopname: [{ required: true, message: '请输入店铺名称', trigger: 'blur' }],
           shopicon: [{ required: true, message: '请先上传店铺图标', trigger: 'blur' }],
           cuisineid: [{ required: true, message: '请选择菜系', trigger: 'blur' }],
-          opentime: [{ type:'date', required: true, message: '请选择营业时间', trigger: 'change' }],
           shophone: [{ required: true, message: '请输入店铺联系电话', trigger: 'blur' }],
           address: [{ required: true, message: '请输入店铺地址', trigger: 'blur' }],
         },
-        fileList: [{
-          name: 'food.jpeg',
-          url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'
-        }],
-        selecteddistrictoptions: [],
+        filelist: [],
       }
     },
     methods: {
+      getShopinfo(){
+        ajax.get('/admin/shop/getDineshopInfo', { params: {shopid: this.shopinfo.shopid} }).then((response) => {
+          if (response.data && response.data.code > 0) {
+            const info = response.data.info;
+            //解析营业时间
+            let opentime = info.opentime.split('-');
+            for (var i = 0; i < opentime.length; i++) {
+              opentime[i] = timefilter(new Date, 'yyyy-mm-dd ')+opentime[i]+':00';
+            }
+            this.filelist = [{url: info.shopicon}];
+            this.shopinfo.shopname = info.shopname;
+            this.shopinfo.shopdesc = info.shopdesc;
+            this.shopinfo.shopicon = info.shopicon;
+            this.shopinfo.cuisineid = info.cuisineid;
+            this.shopinfo.maplon = info.maplon;
+            this.shopinfo.maplat = info.maplat;
+            this.shopinfo.sales = info.sales;
+            this.shopinfo.deliveryfee = info.deliveryfee;
+            this.shopinfo.minprice = info.minprice;
+            this.shopinfo.preconsume = info.preconsume;
+            this.shopinfo.isbooking = info.isbooking;
+            this.shopinfo.isaway = info.isaway;
+            this.shopinfo.opentime = opentime;
+            this.shopinfo.shophone = info.shophone;
+            this.shopinfo.address = info.address;
+          } else {
+            this.$message.error(response.data.msg);
+          }
+        }).catch((e) => {
+          this.$message.error(e.toString());
+        });
+      },
       addDineshop(form) {
         this.$refs[form].validate((valid) => {
           if (valid) {
-            console.log('submit!');
+            let opentimestr = '';
+            const opentime = this.shopinfo.opentime;
+            if(opentime){
+              opentimestr = timefilter(opentime[0], 'hh:ii')+'-'+timefilter(opentime[1], 'hh:ii');
+            }
+            const params = {
+              adduser: this.userinfo.userid,
+              shopid: this.shopinfo.shopid,
+              shopname: this.shopinfo.shopname, //店铺名称
+              shopdesc: this.shopinfo.shopdesc, //店铺描述
+              shopicon: this.shopinfo.shopicon, //店铺图标
+              cuisineid: this.shopinfo.cuisineid, //菜系ID
+              maplon: this.shopinfo.maplon, //经度坐标
+              maplat: this.shopinfo.maplat, //纬度坐标
+              sales: this.shopinfo.sales, //月销量
+              deliveryfee: this.shopinfo.deliveryfee, //配送费
+              minprice: this.shopinfo.minprice, //最低配送金额
+              preconsume: this.shopinfo.preconsume, //人均消费
+              isbooking: this.shopinfo.isbooking, //是否可预订
+              isaway: this.shopinfo.isaway, //是否支持外卖
+              opentime: opentimestr, //营业时间
+              shophone: this.shopinfo.shophone, //联系电话
+              address: this.shopinfo.address, //店铺地址 
+              indicator: {async:true}
+            };
+            ajax.get('/admin/shop/addDineshop', { params: params }).then((response) => {
+              if (response.data && response.data.code > 0) {
+                this.$alert('操作成功！', '', {
+                  confirmButtonText: '确定',
+                  callback: action => {
+                    this.$router.push('/dineshop/');
+                  }
+                });
+              } else {
+                this.$message.error(response.data.msg);
+              }
+            }).catch((e) => {
+              this.$message.error(e.toString());
+            });
           }else {
             return false;
           }
@@ -128,19 +194,30 @@
           this.$message.error(e.toString());
         });
       },
-      handlePreview(){
-
-      },
-      handleRemove(){
-
+      uploadSuccess(response, file, filelist){
+        if(filelist.length > 1){
+          filelist.splice(0, 1);
+        }
+        console.log(filelist);
+        if (response.code > 0 && response.info.imgpath) {
+          this.shopinfo.shopicon = response.info.imgpath;
+        }
       }
     },
     computed: {
-      ...mapGetters({}),
+      ...mapGetters({
+        userinfo: 'userinfo'
+      }),
     },
     created () {
       //获取菜系列表
       this.getCuisinelist();
+      //判断是否修改
+      const query = this.$route.query;
+      if(query.shopid){
+        this.shopinfo.shopid = query.shopid;
+        this.getShopinfo();
+      }
     },
     destroyed(){
 

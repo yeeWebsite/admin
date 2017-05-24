@@ -38,10 +38,12 @@
           <el-table-column label="店铺状态" width="120" class-name="noticeinfo">
             <template scope="scope"><span>{{getShopstatus(scope.row.status)}}</span></template>
           </el-table-column>
-          <el-table-column label="操作" width="140">
+          <el-table-column label="操作" width="200">
             <template scope="scope">
-              <el-button size="small" @click="modDineshop(scope.row)">修改</el-button>
-              <el-button size="small" type="danger" v-if="scope.row.status == 100" @click="delDineshop(scope.$index, scope.row)">删除</el-button>
+              <el-button class="btn" size="small" type="danger" v-if="scope.row.status==0" @click="processAdmin(scope.row, '审核')">审核</el-button>
+              <el-button class="btn" size="small" type="danger" v-if="scope.row.status==1" @click="processAdmin(scope.row, '通过审核')">通过审核</el-button>
+              <el-button class="btn" size="small" type="danger" v-if="scope.row.status==1" @click="processAdmin(scope.row, '审核不通过')">审核不通过</el-button>
+              <el-button class="btn" size="small" type="danger" v-if="scope.row.status==100||scope.row.status==-100" @click="processAdmin(scope.row, '删除')">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -75,17 +77,45 @@ export default {
       this.$router.push({path:'/dineshop/detail/', query:{shopid: info.shopid}});
     },
     //删除店铺跳转
-    delDineshop(shopid){
-      this.$confirm('请谨慎操作，删除的门店信息将不可恢复，是否继续？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-        closeOnClickModal: false,
-        callback: (action) => {
-          if(action == 'confirm'){
-            console.log(2222);
+    processAdmin(info, key){
+      if(key == '审核'){
+        this.modDineshopstatus(info.shopid, key, () => {
+          info.status = 1;
+        });
+      }else if(key == '通过审核'){
+        this.modDineshopstatus(info.shopid, key, () => {
+          info.status = 100;
+        });
+      }else if(key == '审核不通过'){
+        this.modDineshopstatus(info.shopid, key, () => {
+          info.status = -100;
+        });
+      }else if(key == '删除'){
+        this.$confirm('请谨慎操作，删除的门店信息将不可恢复，是否继续？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          closeOnClickModal: false,
+          callback: (action) => {
+            if(action == 'confirm'){
+              this.modDineshopstatus(info.shopid, key, () => {
+                info.status = -300;
+              });
+            }
           }
+        });
+      }
+    },
+    modDineshopstatus(shopid, key, fn){
+      const params = { shopid: shopid, key: key };
+      ajax.get('/admin/shop/modDineshopStatus', {params:params}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          fn();
+        } else {
+          this.$message.error(response.data.msg);
         }
+      }).catch((e) => {
+        this.$message.error(e.toString());
       });
     },
     //获取当前店铺状态 店铺状态（0初始，1审核中，100审核通过，-100审核不通过，-300已下架）

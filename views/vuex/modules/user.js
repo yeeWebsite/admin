@@ -23,7 +23,7 @@ const delCookie = function(name){
 // initial state
 // shape: [{ id, quantity }]
 const state = {
-  userid: '',
+  userid: '10001',
   userck: '',
   platform: 4, //2 android, 3 ios, 5 H5
 }
