@@ -25,7 +25,7 @@
           <el-table-column prop="desknum" label="放号数量"></el-table-column>
           <el-table-column label="操作" width="200">
             <template scope="scope">
-              <el-button size="small"  @click.stop="modDeskinfo(scope.row)">修改</el-button>
+              <el-button size="small" @click.stop="modDeskinfo(scope.row)">修改</el-button>
               <el-button size="small" @click.stop="delDeskinfo(scope.row.id)">删除</el-button>
             </template>
           </el-table-column>
@@ -33,13 +33,13 @@
         <!-- dialog弹层 -->
         <el-dialog class="discount-dialog" :title="dialog.dialogtitle" :visible.sync="dialog.showdialog" size="tiny" :close-on-click-modal="false">
           <div class="deskinfoDialog">
-            <el-form ref="deskform" :model="dialog.data" :rules="rules" label-width="80px" label-position="right">
-              <el-form-item label="就餐人数" prop="seatnum">
+            <el-form ref="deskform" :model="dialog.data" label-width="80px" label-position="right">
+              <el-form-item label="就餐人数" prop="seatnum" :rules="[{required:true,message:'请输入就餐人数'},{type:'number',message:'就餐人数必须为数字值'}]">
                 <el-input v-model.number="dialog.data.seatnum" auto-complete="off" class="inlineinput">
                   <template slot="append">人桌</template>
                 </el-input>
               </el-form-item>
-              <el-form-item label="桌型数量" prop="desknum">
+              <el-form-item label="桌型数量" prop="desknum" :rules="[{required:true,message:'请输入桌型数量'},{type:'number',message:'桌型数量必须为数字值'}]">
                 <el-input v-model.number="dialog.data.desknum" class="inlineinput"></el-input>
               </el-form-item>
             </el-form>
@@ -65,24 +65,13 @@ export default {
       desklist:[],
       dialog:{
         showdialog: false,
-        dialogtitle: 'sss',
+        dialogtitle: '',
         data:{
           id: "",
-          seatnum: "",
-          desknum: ""
+          seatnum: '',
+          desknum: ''
         }
-      },
-      rules:{
-        seatnum: [
-          { required: true, message: '请输入就餐人数', trigger: 'blur' },
-          { type: 'number', message: '就餐人数必须为数字值', trigger: 'blur'}
-        ],
-        desknum: [
-          { required: true, message: '请输入桌型数量', trigger: 'blur' },
-          { type: 'number', message: '桌型数量必须为数字值', trigger: 'blur'}
-        ]
       }
-
     }
   },
   methods: {
@@ -111,8 +100,8 @@ export default {
     addDeskinfo(){
       this.dialog.showdialog = true;
       this.dialog.dialogtitle = '添加桌型';
-      this.dialog.data.seatnum = "";
-      this.dialog.data.desknum = "";
+      this.dialog.data.seatnum = '';
+      this.dialog.data.desknum = '';
     },
     //修改桌型信息
     modDeskinfo(deskinfo){
@@ -121,8 +110,8 @@ export default {
       console.log(deskinfo);
       this.dialog.data = {
         id: deskinfo.id,
-        seatnum: deskinfo.seatnum,
-        desknum: deskinfo.desknum,
+        seatnum: parseInt(deskinfo.seatnum),
+        desknum: parseInt(deskinfo.desknum),
       };
     },
     processDeskinfo(deskform){

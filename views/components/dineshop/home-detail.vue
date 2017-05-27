@@ -3,7 +3,7 @@
     <headerComponent></headerComponent>
     <el-row class="tac" :gutter="10">
       <el-col :span="4">
-        <leftComponent></leftComponent>
+        <leftComponent path="/dineshop/"></leftComponent>
       </el-col>
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>

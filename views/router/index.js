@@ -14,7 +14,6 @@ export default new router({
         {
           name:'首页',
           path:'/', //首页
-          redirect: 'orders',
           component: r => require.ensure([], () => r(require('components/home.vue')), 'home')
         },
         {
@@ -57,9 +56,20 @@ export default new router({
           component: r => require.ensure([], () => r(routerView), 'food'),
           children:[
             {
-              name:'菜肴信息',
-              path:'dishes', //菜肴信息
-              component: r => require.ensure([], () => r(require('components/food/dishes.vue')), 'food')
+              path:'dishes',
+              component: r => require.ensure([], () => r(routerView), 'dineshop'),
+              children:[
+                {
+                  name:'菜肴信息',
+                  path:'/', //菜肴信息
+                  component: r => require.ensure([], () => r(require('components/food/dishes.vue')), 'food'),
+                },
+                {
+                  name:'菜肴信息新增/修改',
+                  path:'detail', //折扣管理
+                  component: r => require.ensure([], () => r(require('components/food/dishes-detail.vue')), 'food')
+                }
+              ]
             },
             {
               name:'菜肴分类管理',

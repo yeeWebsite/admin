@@ -12,6 +12,7 @@
         </el-row>
         <el-table :data="shoplist" :default-sort="{prop:'addtime',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
           <el-table-column type="index" label="序号" width="64"></el-table-column>
+          <el-table-column prop="shopid" label="门店ID" width="80"></el-table-column>
           <el-table-column label="店铺图标" width="90">
             <template scope="scope">
               <img :src="scope.row.shopicon" alt="" style="width: 60px;height: 60px;padding: 10px 0;"/>
@@ -76,7 +77,7 @@ export default {
     modDineshop(info){
       this.$router.push({path:'/dineshop/detail/', query:{shopid: info.shopid}});
     },
-    //删除店铺跳转
+    //后台操作管理
     processAdmin(info, key){
       if(key == '审核'){
         this.modDineshopstatus(info.shopid, key, () => {

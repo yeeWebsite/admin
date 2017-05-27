@@ -7,24 +7,24 @@
         <breadtitleComponent></breadtitleComponent>
         <el-row>
           <el-col :span="24" class="searchbox">
-            Ñ¡ÔñÈÕÆÚ·¶Î§£º<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="Ñ¡ÔñÈÕÆÚ·¶Î§" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;&nbsp;&nbsp;
-            ÊäÈëµêÆÌÃû£º<el-input class="searchinput" placeholder="µêÆÌÃû" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
-            <el-button type="primary" :loading="false" @click.stop="getOrderlist">ËÑË÷</el-button>
+            é€‰æ‹©æ—¥æœŸèŒƒå›´ï¼š<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="é€‰æ‹©æ—¥æœŸèŒƒå›´" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;&nbsp;&nbsp;
+            è¾“å…¥åº—é“ºåï¼š<el-input class="searchinput" placeholder="åº—é“ºå" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
+            <el-button type="primary" :loading="false" @click.stop="getOrderlist">æœç´¢</el-button>
           </el-col>
         </el-row>
-        <el-table :data="orderlist" empty-text="ÔİÎŞÊı¾İ..." style="width: 100%" id="loading">
-          <el-table-column type="index" label="ĞòºÅ" width="64"></el-table-column>
-          <el-table-column prop="orderid" label="¶©µ¥ºÅ" width="120"></el-table-column>
-          <el-table-column label="²ËëÈÃû³Æ" width="200" class-name="noticeinfo">
+        <el-table :data="orderlist" empty-text="æš‚æ— æ•°æ®..." style="width: 100%" id="loading">
+          <el-table-column type="index" label="åºå·" width="64"></el-table-column>
+          <el-table-column prop="orderid" label="è®¢å•å·" width="120"></el-table-column>
+          <el-table-column label="èœè‚´åç§°" width="200" class-name="noticeinfo">
             <template scope="scope"><span v-html="scope.row.orderdetail"></span></template>
           </el-table-column>
-          <el-table-column prop="addtime" label="¶©µ¥Ê±¼ä" width="176"></el-table-column>
-          <el-table-column prop="allmoney" label="¼Û¸ñ" class-name="noticeinfo" width="110"></el-table-column>
-          <el-table-column label="¾Í²ÍĞÅÏ¢" :show-overflow-tooltip="true">
+          <el-table-column prop="addtime" label="è®¢å•æ—¶é—´" width="176"></el-table-column>
+          <el-table-column prop="allmoney" label="ä»·æ ¼" class-name="noticeinfo" width="110"></el-table-column>
+          <el-table-column label="å°±é¤ä¿¡æ¯" :show-overflow-tooltip="true">
             <template scope="scope"><span v-html="scope.row.eatinfo"></span></template>
           </el-table-column>
-          <el-table-column prop="statustr" label="×´Ì¬" width="96"></el-table-column>
-          <el-table-column label="²Ù×÷" width="100">
+          <el-table-column prop="statustr" label="çŠ¶æ€" width="96"></el-table-column>
+          <el-table-column label="æ“ä½œ" width="100">
             <template scope="scope">
               <span>-</span>
             </template>
@@ -46,12 +46,12 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   data() {
     return {
-      //UI×é¼şÊı¾İ
+      //UIç»„ä»¶æ•°æ®
       daterange: [new Date(new Date().getTime() - 7 * 24 * 3600 * 1000), new Date()],
       searchname: '',
       datePickerOptions: {
         shortcuts: [{
-          text: '×î½üÒ»ÖÜ',
+          text: 'æœ€è¿‘ä¸€å‘¨',
           onClick(picker) {
             const end = new Date();
             const start = new Date();
@@ -59,7 +59,7 @@ export default {
             picker.$emit('pick', [start, end]);
           }
         }, {
-          text: '×î½üÒ»¸öÔÂ',
+          text: 'æœ€è¿‘ä¸€ä¸ªæœˆ',
           onClick(picker) {
             const end = new Date();
             const start = new Date();
@@ -67,7 +67,7 @@ export default {
             picker.$emit('pick', [start, end]);
           }
         }, {
-          text: '×î½üÈı¸öÔÂ',
+          text: 'æœ€è¿‘ä¸‰ä¸ªæœˆ',
           onClick(picker) {
             const end = new Date();
             const start = new Date();
@@ -76,7 +76,7 @@ export default {
           }
         }]
       },
-      //Ò³ÃædataÊı¾İÔ´
+      //é¡µé¢dataæ•°æ®æº
       page: 1,
       pagesize: 20,
       allnum: 0,
@@ -89,7 +89,7 @@ export default {
       this.page = page;
       this.getOrderlist();
     },
-    //»ñÈ¡¶©µ¥ÁĞ±í
+    //è·å–è®¢å•åˆ—è¡¨
     getOrderlist(){
       const startime = timefilter(this.daterange[0], 'yyyy/mm/dd');
       const endtime = timefilter(this.daterange[1], 'yyyy/mm/dd');
@@ -116,7 +116,7 @@ export default {
           orderinfo['orderdetail'] = this.formatOrderlist(list[i].orderlist);
           orderinfo['addtime'] = list[i].addtime?timefilter(new Date(list[i].addtime), 'yyyy/mm/dd hh:ii:ss'):'';
           orderinfo['allmoney'] = currency(list[i].allmoney);
-          orderinfo['eatinfo'] = '¾Í²ÍÈËÊı£º'+list[i].mealsnum+'<br>¾Í²ÍÊ±¼ä£º'+timefilter(new Date(list[i].startime), 'yyyy/mm/dd hh:ii:ss')+' - '+timefilter(new Date(list[i].endtime), 'yyyy/mm/dd hh:ii:ss');
+          orderinfo['eatinfo'] = 'å°±é¤äººæ•°ï¼š'+list[i].mealsnum+'<br>å°±é¤æ—¶é—´ï¼š'+timefilter(new Date(list[i].startime), 'yyyy/mm/dd hh:ii:ss')+' - '+timefilter(new Date(list[i].endtime), 'yyyy/mm/dd hh:ii:ss');
           orderinfo['status'] = list[i].status;
           orderinfo['statustr'] = getOrderStatus(list[i].status);
           this.orderlist.push(orderinfo);
@@ -137,7 +137,7 @@ export default {
     }),
   },
   created () {
-    //³õÊ¼»ñÈ¡Êı¾İ
+    //åˆå§‹è·å–æ•°æ®
     this.getOrderlist();
   },
   destroyed(){

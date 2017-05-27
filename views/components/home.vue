@@ -5,6 +5,12 @@
       <el-col :span="4"><leftComponent></leftComponent></el-col>
       <el-col :span="20">
         <!-- 页面输入内容 -->
+        <el-card class="box-card">
+          <div v-for="(info, key) in update" :key="key" class="text item">
+            <div style="color:red; padding:6px 0px;">{{info.date}} 更新内容：</div>
+            <div style="border:1px solid #ccc; padding:12px 20px;" v-html="info.msg"></div>
+          </div>
+        </el-card>
       </el-col>
     </el-row>
   </div>
@@ -17,7 +23,10 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   data() {
     return {
-      
+      update:[
+        {date: '2017/05/27', msg: '1,添加菜肴信息管理; <br> 2,添加菜肴信息修改和新增；<br> 3,修复店铺后台修改前端不能正常显示问题；'},
+        {date: '2017/05/24', msg: '略'}
+      ]
     }
   },
   methods: {
