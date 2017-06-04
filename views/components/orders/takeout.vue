@@ -33,7 +33,7 @@
           </el-table-column>
           <el-table-column label="操作" width="100">
             <template scope="scope">
-              <el-popover ref="popoverDistrip" placement="left" trigger="click" v-model="scope.row.showpopover">
+              <el-popover v-if="scope.row.status == 2" ref="popoverDistrip" placement="left" trigger="click" v-model="scope.row.showpopover">
                 <el-table :data="distriplist">
                   <el-table-column property="distripname" label="配送员" width="80"></el-table-column>
                   <el-table-column property="distripmobile" label="联系电话" width="150"></el-table-column>
@@ -44,7 +44,7 @@
                   </el-table-column>
                 </el-table>
               </el-popover>
-              <el-button v-if="scope.row.status == 2" size="small" v-popover:popoverDistrip @click.stop="deliveryOrder(scope.row.shopid)">派单配送</el-button>
+              <el-button v-if="scope.row.status == 2" size="small" v-popover:popoverDistrip @click.stop="deliveryOrder(scope.row.shopid);">派单配送</el-button>
               <el-button v-else-if="scope.row.status == 3" size="small" @click.stop="processOrder(scope.row, 3)">配送完成</el-button>
               <el-button v-else-if="scope.row.status == 4" size="small" @click.stop="processOrder(scope.row, 4)">已完成</el-button>
               <span v-else>-</span>
