@@ -8,7 +8,7 @@
         <!-- 页面输入内容 -->
         <el-row type="flex">
           <el-col :span="24" class="searchbox">
-            输入店铺ID：<el-input class="searchinput" placeholder="店铺ID" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
+            店铺ID或店铺名模糊搜索：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
             <span style="margin-left:20px;">门店：{{shopname?shopname:'-'}}</span>
             <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="addDeskinfo()">新增桌型</el-button>

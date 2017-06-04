@@ -109,8 +109,17 @@
             const info = response.data.info;
             //解析营业时间
             let opentime = info.opentime.split('-');
+	    console.log(opentime);
             for (var i = 0; i < opentime.length; i++) {
-              opentime[i] = timefilter(new Date, 'yyyy-mm-dd ')+opentime[i]+':00';
+	      let tempStr = opentime[i].trim();
+	      if (tempStr == '0NaN:0NaN'){console.log('0NaN:0NaN');
+		 if (i == 0){
+		    tempStr = '09:00';
+		 }else if (i == 1){
+		    tempStr = '23:00';
+		 }
+	      }
+              opentime[i] = timefilter(new Date, 'yyyy-mm-dd ')+tempStr+':00';
             }
             this.filelist = [{url: info.shopicon}];
             this.shopinfo.shopname = info.shopname;
@@ -143,6 +152,8 @@
             if(opentime){
               opentimestr = timefilter(opentime[0], 'hh:ii')+'-'+timefilter(opentime[1], 'hh:ii');
             }
+	    console.log(opentime);
+	    console.log(opentimestr);
             const params = {
               adduser: this.userinfo.userid,
               shopid: this.shopinfo.shopid,

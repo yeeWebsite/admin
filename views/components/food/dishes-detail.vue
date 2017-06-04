@@ -12,7 +12,7 @@
             <el-input v-model="dishinfo.dishname"></el-input>
           </el-form-item>
           <el-form-item label="菜肴描述">
-            <el-input type="textarea" v-model="dishinfo.shopdesc"></el-input>
+            <el-input type="textarea" v-model="dishinfo.dishdesc"></el-input>
           </el-form-item>
           <el-form-item label="菜肴图标" prop="dishicon">
             <el-upload action="/admin/upload/images" :multiple="false" name="file" :data="{filetype:'dishicon'}" :file-list="filelist" :on-success="uploadSuccess" list-type="picture-card">

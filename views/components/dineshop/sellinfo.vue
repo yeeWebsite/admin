@@ -8,7 +8,7 @@
         <!-- 页面输入内容 -->
         <el-row type="flex">
           <el-col :span="24" class="searchbox">
-            输入店铺ID：<el-input class="searchinput" placeholder="店铺ID" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
+            店铺ID或店铺名模糊搜索：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
             <span style="margin-left:20px;">门店：{{shopname?shopname:'-'}}</span>
             <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="showTimeslot()">编辑时间段</el-button>
@@ -85,9 +85,9 @@
     <el-dialog title="新增时间段" :visible.sync="addtimeslotdialogvisible" size="tiny" :close-on-click-modal="false">
       <el-row>
         新增时间段:
-        <el-time-select class="add-time-slot-select" placeholder="起始时间" v-model="addtimeslot.starttime" :picker-options="{start: '00:00', step: '01:00', end: '23:00', maxTime: addtimeslot.endtime }">
+        <el-time-select class="add-time-slot-select" placeholder="起始时间" v-model="addtimeslot.starttime" :picker-options="{start: '00:00', step: '00:30', end: '23:00', maxTime: addtimeslot.endtime }">
         </el-time-select>
-        <el-time-select class="add-time-slot-select" placeholder="结束时间" v-model="addtimeslot.endtime" :picker-options="{ start: '00:00', step: '01:00', end: '23:00', minTime: addtimeslot.starttime }">
+        <el-time-select class="add-time-slot-select" placeholder="结束时间" v-model="addtimeslot.endtime" :picker-options="{ start: '00:00', step: '00:30', end: '23:00', minTime: addtimeslot.starttime }">
         </el-time-select>
       </el-row>
       <span slot="footer" class="dialog-footer">
