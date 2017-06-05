@@ -8,21 +8,23 @@
         <el-row>
           <el-col :span="24" class="searchbox">
             选择日期范围：<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="选择日期范围" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;&nbsp;&nbsp;
-            输入店铺名：<el-input class="searchinput" placeholder="店铺名" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
+            店铺ID或店铺名称：<el-input class="searchinput" placeholder="店铺ID或店铺名称" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false" @click.stop="getOrderlist">搜索</el-button>
           </el-col>
         </el-row>
         <el-table :data="orderlist" empty-text="暂无数据..." style="width: 100%" id="loading">
           <el-table-column type="index" label="序号" width="64"></el-table-column>
           <el-table-column prop="orderid" label="订单号" width="120"></el-table-column>
-          <el-table-column label="菜肴名称" width="200" class-name="noticeinfo">
-            <template scope="scope"><span v-html="scope.row.orderdetail"></span></template>
-          </el-table-column>
-          <el-table-column prop="addtime" label="订单时间" width="176"></el-table-column>
-          <el-table-column prop="allmoney" label="价格" class-name="noticeinfo" width="110"></el-table-column>
+          <el-table-column prop="shopname" label="店铺名称" :show-overflow-tooltip="true"></el-table-column>
+          <el-table-column prop="usermobile" label="用户账户" width="127"></el-table-column>
           <el-table-column label="就餐信息" :show-overflow-tooltip="true">
             <template scope="scope"><span v-html="scope.row.eatinfo"></span></template>
           </el-table-column>
+          <el-table-column prop="deskinfo" label="桌号" width="120"></el-table-column>
+          <el-table-column label="菜肴名称" width="120">
+            <template scope="scope"><span @click.stop="showOrderDetail(scope.row.orderlist)" style="text-decoration: underline; cursor:pointer;">查看菜单</span></template>
+          </el-table-column>
+          <el-table-column prop="allmoney" label="价格" class-name="noticeinfo" width="110"></el-table-column>
           <el-table-column prop="statustr" label="状态" width="96"></el-table-column>
           <el-table-column label="操作" width="100">
             <template scope="scope">
@@ -30,6 +32,17 @@
             </template>
           </el-table-column>
         </el-table>
+        <el-dialog class="sellinfo-dialog" title="菜单信息" size="tiny" :visible.sync="orderdetailvisible" :close-on-click-modal="false">
+          <el-table :data="orderlistdetail">
+            <el-table-column prop="dishesname" label="菜肴名称" align="left"></el-table-column>
+            <el-table-column label="金额" align="left">
+              <template scope="scope"><span>{{moneyCurrency(scope.row.price)}}</span></template>
+            </el-table-column>
+            <el-table-column prop="num" label="预订数量" align="right">
+              <template scope="scope"><span>x{{scope.row.num}}</span></template>
+            </el-table-column>
+          </el-table>
+        </el-dialog>
         <pageComponent v-if="orderlist.length>0" :page="page" :pagesize="pagesize" :total="allnum" :callback="getCurrentPage"></pageComponent>
       </el-col>
     </el-row>
@@ -82,6 +95,8 @@ export default {
       allnum: 0,
       orderlist: [],
       distriplist: [],
+      orderdetailvisible: false,
+      orderlistdetail: [],
     }
   },
   methods: {
@@ -113,7 +128,10 @@ export default {
           orderinfo['showpopover'] = false;
           orderinfo['shopid'] = list[i].shopid;
           orderinfo['orderid'] = list[i].orderid;
-          orderinfo['orderdetail'] = this.formatOrderlist(list[i].orderlist);
+          orderinfo['shopname'] = list[i].shopname;
+          orderinfo['usermobile'] = list[i].usermobile;
+          orderinfo['deskinfo'] = list[i].seatnum?list[i].seatnum+'人桌 C'+list[i].deskid:'';
+          orderinfo['orderlist'] = list[i].orderlist;
           orderinfo['addtime'] = list[i].addtime?timefilter(new Date(list[i].addtime), 'yyyy/mm/dd hh:ii:ss'):'';
           orderinfo['allmoney'] = currency(list[i].allmoney);
           orderinfo['eatinfo'] = '就餐人数：'+list[i].mealsnum+'<br>就餐时间：'+timefilter(new Date(list[i].startime), 'yyyy/mm/dd hh:ii:ss')+' - '+timefilter(new Date(list[i].endtime), 'yyyy/mm/dd hh:ii:ss');
@@ -122,13 +140,14 @@ export default {
           this.orderlist.push(orderinfo);
         }
       }
+    }, 
+    showOrderDetail(orderlistdetail){
+      this.orderdetailvisible = true;
+      this.orderlistdetail = orderlistdetail;
+      console.log(orderlistdetail);
     },
-    formatOrderlist(order){
-      const orderlist = [];
-      for (var i = order.length - 1; i >= 0; i--) {
-        orderlist.push(order[i].dishesname+' x'+order[i].num);
-      }
-      return orderlist.join('<br>');
+    moneyCurrency(money){
+      return currency(money);
     }
   },
   computed: {
