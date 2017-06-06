@@ -31,7 +31,7 @@ module.exports = {
     proxyTable: [
       {
         context: ['/admin/**','/public/**','/upload/**'],
-        target: 'http://boss.yee.website',
+        target: 'http://www.yee.website',
         secure: false,
         changeOrigin: true
       },

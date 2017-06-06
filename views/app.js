@@ -13,10 +13,10 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.checkAuth)) {
     const islogin = store.getters.islogin;
     if(!islogin){
-      /*next({
+      next({
         path: '/account/login/',
         query: { backurl: to.fullPath }
-      });*/
+      });
       next();
     }else{
       next();

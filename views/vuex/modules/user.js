@@ -3,7 +3,7 @@ import * as types from '../mutation-types'
 const setCookie = function(name, value){
   var exp = new Date();
   exp.setTime(exp.getTime() + 2*60*60*1000); //2小时过期
-  document.cookie = name + "="+ escape (value) + ";expires=" + exp.toGMTString()+';domain=.enlottery.com;path=/;';
+  document.cookie = name + "="+ escape (value) + ";expires=" + exp.toGMTString()+';path=/;';
 }
 const getCookie = function(name){
   var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
@@ -23,7 +23,7 @@ const delCookie = function(name){
 // initial state
 // shape: [{ id, quantity }]
 const state = {
-  userid: '10001',
+  userid: '',
   userck: '',
   platform: 4, //2 android, 3 ios, 5 H5
 }
@@ -52,6 +52,12 @@ const actions = {
     commit(types.setUserLogin, userinfo)
   },
   setUserLogout({commit}){
+    if(getCookie('userid')){
+      delCookie('userid');
+    }
+    if(getCookie('userck')){
+      delCookie('userck');
+    }
     //更新缓存信息
     commit(types.setUserLogout)
   },

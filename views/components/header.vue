@@ -3,32 +3,61 @@
     <el-menu-item index="title" class="title info">后台管理系统</el-menu-item>
     <el-menu-item index="/logout/" class="fright">退出登录</el-menu-item>
     <el-menu-item index="/orders/" class="fright">订单管理</el-menu-item>
-    <el-menu-item index="tips" class="fright info">你好，admin</el-menu-item>
+    <el-menu-item index="tips" class="fright info">你好，{{username}}</el-menu-item>
   </el-menu>
 </template>
 
 <script>
+import { ajax } from "@/libs/ajax"
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
   data(){
     return {
-      
+      username: ''
     }
   },
   props: [],
   methods:{
     handleSelect(key, keyPath) {
       if(key == '/orders/') this.$router.push({path:key});
-      else if(key == '/logout/') this.$router.push({path:'/user/login/'});
+      else if(key == '/logout/'){
+        //退出登录
+        const params = { ck: this.userinfo.userck, uid: this.userinfo.userid, indicator:{async:true} };
+        ajax.get('/admin/User/logout', {params:params}).then((response) => {
+          if (response.data && response.data.code > 0) {
+            //服务端已退出登录，执行前端退出登录
+            this.$store.dispatch('setUserLogout').then(() => {
+              this.$router.push('/user/login/');
+            });
+          } else {
+            this.$message.error(response.data.msg);
+          }
+        }).catch((e) => {
+          this.$message.error(e.toString());
+        });
+      }
+    },
+    getUserinfo(){
+      const params = {ck: this.userinfo.userck, uid: this.userinfo.userid, userid: this.userinfo.userid, indicator:{async:true}};
+      ajax.get('/admin/User/getuserinfo', {params:params}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          const info = response.data.info;
+          this.username = info.username || '';
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
     }
   },
   created(){
-    
+    this.getUserinfo();
   },
   computed: {
     ...mapGetters({
-      
+      userinfo: 'userinfo'
     })
   },
   components: {

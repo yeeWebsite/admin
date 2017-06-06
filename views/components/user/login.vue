@@ -30,16 +30,30 @@ export default {
   },
   methods: {
     loginAction(){
-      this.$router.push('/');
+      const params = { username: this.username, password: this.password };
+      ajax.get('/admin/user/login', {params:params}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          const info = response.data.info;
+          this.$store.dispatch('setUserLogin', {userck:info.ck, userid:info.uid}).then(() => {
+            this.$router.push('/');
+          });
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
     }
   },
   computed: {
     ...mapGetters({
-      
+      islogin: 'islogin'
     }),
   },
   created () {
-    
+    if(this.islogin){
+      this.$router.push('/');
+    }
   },
   destroyed(){
     

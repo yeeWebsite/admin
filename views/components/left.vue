@@ -1,5 +1,5 @@
 <template lang="html">
-  <el-menu :router="true" :default-active="defaultActive" :default-openeds="['dineshop','orders','money']">
+  <el-menu :router="true" :default-active="defaultActive" :default-openeds="['dineshop','orders','money']" v-if="userinfo.userid==10001">
     <el-menu-item index="/">管理首页</el-menu-item>
     <el-submenu index="dineshop">
       <template slot="title">门店管理</template>
@@ -27,6 +27,11 @@
     <el-menu-item index="/user/">用户管理</el-menu-item>
     <el-menu-item index="/user/power/">权限管理</el-menu-item>
   </el-menu>
+  <el-menu :router="true" :default-active="defaultActive" v-else>
+    <el-menu-item index="/">我的门店</el-menu-item>
+    <el-menu-item index="/orders/">外卖订单</el-menu-item>
+    <el-menu-item index="/orders/eatin/">预售订单</el-menu-item>
+  </el-menu>
 </template>
 
 <script>
@@ -43,11 +48,14 @@ export default {
   },
   created(){
     this.defaultActive = this.path?this.path:this.$route.path;
-    console.log(this.$route);
+    if(!this.islogin){
+      this.$router.push('/user/login/');
+    }
   },
   computed: {
     ...mapGetters({
-      
+      islogin: 'islogin',
+      userinfo: 'userinfo',
     })
   },
   components: {

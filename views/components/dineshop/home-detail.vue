@@ -109,7 +109,6 @@
             const info = response.data.info;
             //解析营业时间
             let opentime = info.opentime.split('-');
-	    console.log(opentime);
             for (var i = 0; i < opentime.length; i++) {
 	      let tempStr = opentime[i].trim();
 	      if (tempStr == '0NaN:0NaN'){console.log('0NaN:0NaN');
@@ -152,8 +151,6 @@
             if(opentime){
               opentimestr = timefilter(opentime[0], 'hh:ii')+'-'+timefilter(opentime[1], 'hh:ii');
             }
-	    console.log(opentime);
-	    console.log(opentimestr);
             const params = {
               adduser: this.userinfo.userid,
               shopid: this.shopinfo.shopid,
