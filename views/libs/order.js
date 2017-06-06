@@ -13,5 +13,5 @@ export function getOrderStatus(status){
   	"-400":"已取消"
   }
   if(typeof status != 'undefined' && statusJson[status]) return statusJson[status];
-  else return statusJson;
+  else return '';
 }
