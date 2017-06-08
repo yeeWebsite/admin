@@ -53,6 +53,9 @@
               <template slot="append">折</template>
             </el-input>
           </el-form-item>
+	  <el-form-item label="菜肴月销量">
+            <el-input v-model="dishinfo.salenum" placeholder="10" class="inlineinput"></el-input> 份
+          </el-form-item>
           <el-form-item label="所属店铺">{{dishinfo.shopname}}</el-form-item>
           <el-form-item>
             <router-link to="/food/dishes/" style="margin-right:15px;text-decoration:none;color:#48576a;">返回</router-link>
@@ -87,6 +90,7 @@
           tastesid: [], //口味ID
           cuisineid: '', //菜系ID
           classid: '', //分类ID
+	  salenum:0, //菜肴月销量
           shopid: '', //所属店铺
           shopname: '', //所属店铺
         },
@@ -132,6 +136,7 @@
             this.dishinfo.tastesid = info.tastesid.split(','); //口味ID
             this.dishinfo.cuisineid = info.cuisineid; //菜系ID
             this.dishinfo.classid = info.classid; //分类ID
+	    this.dishinfo.salenum = info.salenum;//月销量
           } else {
             this.$message.error(response.data.msg);
           }
@@ -154,6 +159,7 @@
               cuisineid: this.dishinfo.cuisineid, //菜系ID
               classid: this.dishinfo.classid, //分类ID
               shopid: this.dishinfo.shopid, //所属店铺
+	      salenum: this.dishinfo.salenum,//月销量
               indicator: {async:true}
             };
             ajax.get('/admin/dishes/addDishes', { params: params }).then((response) => {

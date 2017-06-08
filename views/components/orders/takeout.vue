@@ -6,15 +6,19 @@
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
         <el-row>
-          <el-col :span="24" class="searchbox">
-            选择日期范围：<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="选择日期范围" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;&nbsp;&nbsp;
-            输入店铺名：<el-input class="searchinput" placeholder="店铺名" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
+          <el-col :span="24" class="searchbox" v-if="isysadmin">
+            选择日期范围：<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="选择日期范围" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;
+            输入店铺名或订单号：<el-input class="searchinput" placeholder="店铺名或订单号" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false" @click.stop="getOrderlist">搜索</el-button>
+          </el-col>
+          <el-col :span="24" class="searchbox" v-else>
+            <span style="margin-left:20px; line-height:36px;">门店：{{(shopinfo&&shopinfo.shopname)?shopinfo.shopname:'-'}}</span>
           </el-col>
         </el-row>
         <el-table :data="orderlist" :default-sort="{prop:'orderid',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
-          <el-table-column type="index" label="序号" width="64"></el-table-column>
-          <el-table-column prop="orderid" label="订单号" width="120"></el-table-column>
+          <el-table-column type="index" label="序号" width="50"></el-table-column>
+          <el-table-column prop="orderid" label="订单号" width="110"></el-table-column>
+	  <el-table-column prop="shopname" label="店铺名" width="100"></el-table-column>
           <el-table-column label="菜肴名称" width="200" class-name="noticeinfo">
             <template scope="scope"><span v-html="scope.row.orderdetail"></span></template>
           </el-table-column>
@@ -122,7 +126,7 @@ export default {
       });
     },
     processOrder(order, status, info = {}){
-      let params = { orderid: order.orderid, status: status };
+      let params = { orderid: order.orderid, status: status, userid: order.userid};
       let callback;
       if(status == 2){ //已付款处理
         const distrip = info;
@@ -180,6 +184,8 @@ export default {
           let orderinfo = {};
           orderinfo['showpopover'] = false;
           orderinfo['shopid'] = list[i].shopid;
+	  orderinfo['shopname'] = list[i].shopname;
+	  orderinfo['userid'] = list[i].userid;
           orderinfo['orderid'] = list[i].orderid;
           orderinfo['orderdetail'] = this.formatOrderlist(list[i].orderlist);
           orderinfo['addtime'] = list[i].addtime?timefilter(new Date(list[i].addtime), 'yyyy/mm/dd hh:ii:ss'):'';
@@ -202,7 +208,9 @@ export default {
   },
   computed: {
     ...mapGetters({
-
+      isysadmin: 'isysadmin',
+      userinfo: 'userinfo',
+      shopinfo: 'shopinfo'
     }),
   },
   created () {

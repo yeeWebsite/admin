@@ -7,10 +7,14 @@
         <breadtitleComponent></breadtitleComponent>
         <!-- 页面输入内容 -->
         <el-row type="flex">
-          <el-col :span="24" class="searchbox">
+          <el-col :span="24" class="searchbox" v-if="isysadmin">
             店铺ID或店铺名模糊搜索：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
             <span style="margin-left:20px;">门店：{{shopname?shopname:'-'}}</span>
+            <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="showTimeslot()">编辑时间段</el-button>
+          </el-col>
+          <el-col :span="24" class="searchbox" v-else>
+            <span style="margin-left:20px; line-height:36px;">门店：{{shopname?shopname:'-'}}</span>
             <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="showTimeslot()">编辑时间段</el-button>
           </el-col>
         </el-row>
@@ -118,7 +122,7 @@ import { timefilter } from "@/filters/timefilter"
 export default {
   data() {
     return {
-      shopid: "1",
+      shopid: "",
       shopname: "",
       tablelist: [],
       activename: 'sellinfo',
@@ -391,11 +395,17 @@ export default {
   },
   computed: {
     ...mapGetters({
-
+      isysadmin: 'isysadmin',
+      userinfo: 'userinfo',
+      shopinfo: 'shopinfo'
     }),
   },
   created () {
-    this.searchDineshop();
+    //门店端
+    if(!this.isysadmin){
+      this.shopid = this.shopinfo?this.shopinfo.id:'';
+      this.searchDineshop();
+    }
   },
   destroyed(){
     

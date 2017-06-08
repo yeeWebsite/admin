@@ -35,13 +35,38 @@ export default {
         if (response.data && response.data.code > 0) {
           const info = response.data.info;
           this.$store.dispatch('setUserLogin', {userck:info.ck, userid:info.uid}).then(() => {
-            this.$router.push('/');
+            //门店用户取对应门店信息
+            if(info.uid != 10001){
+              this.getShopinfo(info.uid);
+            }else{
+              this.$router.push('/');
+            }
           });
         } else {
-          this.$message.error(response.data.msg);
+          return this.$message.error(response.data.msg);
         }
       }).catch((e) => {
-        this.$message.error(e.toString());
+        return this.$message.error(e.toString());
+      });
+    },
+    getShopinfo(userid){
+      const params = { userid: userid, indicator:{async:true} };
+      ajax.get('/admin/shop/getUserDineshopInfo', {params:params}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          const info = response.data.info;
+          console.log(info);
+          if(typeof info == 'object' && info.id){
+            this.$store.dispatch('setShopinfo', info).then(() => {
+              this.$router.push('/');
+            });
+          }else{
+            this.$router.push('/');
+          }
+        } else {
+          return this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        return this.$message.error(e.toString());
       });
     }
   },

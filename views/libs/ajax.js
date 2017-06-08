@@ -19,7 +19,7 @@ ajax.interceptors.request.use(function (config) {
     vuex = JSON.parse(vuex);
     if(vuex.user){
       if(vuex.user.userid) fields.uid = vuex.user.userid;
-      if(vuex.user.userck) fields.userck = vuex.user.userck;
+      if(vuex.user.userck) fields.ck = vuex.user.userck;
       if(vuex.user.platform) fields.platform = vuex.user.platform;
     }
   }

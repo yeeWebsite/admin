@@ -26,6 +26,7 @@ const state = {
   userid: '',
   userck: '',
   platform: 4, //2 android, 3 ios, 5 H5
+  shopinfo: '', //门店用户设置对应的门店信息
 }
 
 // getters
@@ -36,7 +37,11 @@ const getters = {
     if(state.userck && state.userid){
       return true;
     }else return false;
-  }
+  },
+  isysadmin: (state, getters) => {
+    return state.userid == 10001;
+  },
+  shopinfo: state => state.shopinfo
 }
 
 // actions
@@ -60,10 +65,19 @@ const actions = {
     }
     //更新缓存信息
     commit(types.setUserLogout)
+    commit(types.clearShopinfo)
   },
   setPlatform({commit}, platform){
     //更新缓存信息
     commit(types.setPlatform, platform)
+  },
+  //设置门店信息
+  setShopinfo({commit}, shopinfo){
+    commit(types.setShopinfo, shopinfo)
+  },
+  //清除门店信息
+  clearShopinfo({commit}){
+    commit(types.setShopinfo)
   }
 }
 
@@ -80,6 +94,12 @@ const mutations = {
   },
   [types.setPlatform] (state, platform){
     state.platform = platform || 4;
+  },
+  [types.setShopinfo] (state, shopinfo){
+    state.shopinfo = shopinfo;
+  },
+  [types.clearShopinfo] (state){
+    state.shopinfo = '';
   }
 }
 

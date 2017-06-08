@@ -3,7 +3,7 @@
     <headerComponent></headerComponent>
     <el-row class="tac" :gutter="10">
       <el-col :span="4">
-        <leftComponent path="/dineshop/"></leftComponent>
+        <leftComponent :path="leftpath"></leftComponent>
       </el-col>
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
@@ -37,11 +37,15 @@
           </el-form-item>
           <el-form-item label="可否预订">
             <el-switch on-text="" off-text="" v-model="shopinfo.isbooking" on-value="1" off-value="0"></el-switch>
+	    最小预约金额：<el-input v-show="shopinfo.isbooking == '1'" v-model="shopinfo.minconsume" placeholder="最小预约金额" class="inlineinput"><template slot="append">元</template></el-input>
           </el-form-item>
           <el-form-item label="可否外卖">
             <el-switch on-text="" off-text="" v-model="shopinfo.isaway" on-value="1" off-value="0" style="margin-right:10px;"></el-switch>
             配送费：<el-input v-show="shopinfo.isaway == '1'" v-model="shopinfo.deliveryfee" placeholder="配送费" class="inlineinput"><template slot="append">元</template></el-input>&nbsp;&nbsp;
             起送金额：<el-input v-show="shopinfo.isaway == '1'" v-model="shopinfo.minprice" placeholder="最低配送金额" class="inlineinput"><template slot="append">元</template></el-input>
+          </el-form-item>
+	  <el-form-item label="门店服务费">
+            <el-input v-model="shopinfo.servicecharge" placeholder="0" style="width:150px"></el-input> 元
           </el-form-item>
           <el-form-item label="营业时间" prop="opentime" required>
             <el-time-picker is-range v-model="shopinfo.opentime" format="HH:mm" placeholder="选择时间范围"></el-time-picker>
@@ -70,6 +74,7 @@
   export default {
     data() {
       return {
+        leftpath: '/dineshop/',
         //菜系列表
         cuisinelist:[],
         //页面data数据源
@@ -87,7 +92,9 @@
           minprice:'', //最低配送金额
           preconsume:'', //人均消费
           isbooking:1, //是否可预订
+	  minconsume:0,//最小预约金额
           isaway:1, //是否支持外卖
+	  servicecharge:0,//门店服务费
           opentime: [timefilter(new Date, 'yyyy-mm-dd ')+'09:00:00', timefilter(new Date, 'yyyy-mm-dd ')+'23:00:00' ], //营业时间
           shophone:'', //联系电话
           address: '', //店铺地址 
@@ -110,14 +117,14 @@
             //解析营业时间
             let opentime = info.opentime.split('-');
             for (var i = 0; i < opentime.length; i++) {
-	      let tempStr = opentime[i].trim();
-	      if (tempStr == '0NaN:0NaN'){console.log('0NaN:0NaN');
-		 if (i == 0){
-		    tempStr = '09:00';
-		 }else if (i == 1){
-		    tempStr = '23:00';
-		 }
-	      }
+      	      let tempStr = opentime[i].trim();
+      	      if (tempStr == '0NaN:0NaN'){
+                if (i == 0){
+                  tempStr = '09:00';
+                }else if (i == 1){
+                  tempStr = '23:00';
+                }
+      	      }
               opentime[i] = timefilter(new Date, 'yyyy-mm-dd ')+tempStr+':00';
             }
             this.filelist = [{url: info.shopicon}];
@@ -132,7 +139,9 @@
             this.shopinfo.minprice = info.minprice;
             this.shopinfo.preconsume = info.preconsume;
             this.shopinfo.isbooking = info.isbooking;
+	    this.shopinfo.minconsume = info.minconsume;
             this.shopinfo.isaway = info.isaway;
+	    this.shopinfo.servicecharge = info.servicecharge;
             this.shopinfo.opentime = opentime;
             this.shopinfo.shophone = info.shophone;
             this.shopinfo.address = info.address;
@@ -165,7 +174,9 @@
               minprice: this.shopinfo.minprice, //最低配送金额
               preconsume: this.shopinfo.preconsume, //人均消费
               isbooking: this.shopinfo.isbooking, //是否可预订
+	      minconsume: this.shopinfo.minconsume,//最小预约金额
               isaway: this.shopinfo.isaway, //是否支持外卖
+	      servicecharge: this.shopinfo.servicecharge,//门店服务费
               opentime: opentimestr, //营业时间
               shophone: this.shopinfo.shophone, //联系电话
               address: this.shopinfo.address, //店铺地址 
@@ -176,7 +187,11 @@
                 this.$alert('操作成功！', '', {
                   confirmButtonText: '确定',
                   callback: action => {
-                    this.$router.push('/dineshop/');
+                    if(this.isysadmin){
+                      this.getShopinfoByuser();
+                    }else{
+                      this.$router.push('/dineshop/');
+                    }
                   }
                 });
               } else {
@@ -210,11 +225,32 @@
         if (response.code > 0 && response.info.imgpath) {
           this.shopinfo.shopicon = response.info.imgpath;
         }
+      },
+      getShopinfoByuser(){
+        const params = { userid: this.userinfo.userid, indicator:{async:true} };
+        ajax.get('/admin/shop/getUserDineshopInfo', {params:params}).then((response) => {
+          if (response.data && response.data.code > 0) {
+            const info = response.data.info;
+            if(typeof info == 'object' && info.id){
+              this.$store.dispatch('setShopinfo', info).then(() => {
+                this.$router.push('/');
+              });
+            }else{
+              this.$router.push('/');
+            }
+          } else {
+            return this.$message.error(response.data.msg);
+          }
+        }).catch((e) => {
+          return this.$message.error(e.toString());
+        });
       }
     },
     computed: {
       ...mapGetters({
-        userinfo: 'userinfo'
+        isysadmin: 'isysadmin',
+        userinfo: 'userinfo',
+        usershopinfo: 'shopinfo',
       }),
     },
     created () {
@@ -222,9 +258,14 @@
       this.getCuisinelist();
       //判断是否修改
       const query = this.$route.query;
-      if(query.shopid){
-        this.shopinfo.shopid = query.shopid;
+      let _shopid = query.shopid || this.usershopinfo.id;
+      if(_shopid){
+        this.shopinfo.shopid = _shopid;
         this.getShopinfo();
+      }
+      //
+      if(!this.isysadmin){
+        this.leftpath = '/';
       }
     },
     destroyed(){

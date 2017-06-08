@@ -7,12 +7,15 @@
         <breadtitleComponent></breadtitleComponent>
         <!-- 页面输入内容 -->
         <el-row type="flex">
-          <el-col :span="24" class="searchbox">
+          <el-col :span="24" class="searchbox" v-if="isysadmin">
             输入店铺ID：<el-input class="searchinput" placeholder="店铺ID" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false"  @click.stop="searchDishes()">搜索</el-button>
             <span style="margin-left:20px;">门店：{{shopname?shopname:'-'}}</span>
             <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="addDishes()">新增菜肴</el-button>
-            <!-- <el-button type="primary" style="float: right; margin-right:6px;" @click.stop="dishClassify()">菜肴分类管理</el-button> -->
+          </el-col>
+          <el-col :span="24" class="searchbox" v-else>
+            <span style="margin-left:20px; line-height:36px;">门店：{{shopname?shopname:'-'}}</span>
+            <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="addDishes()">新增菜肴</el-button>
           </el-col>
         </el-row>
         <el-table :data="disheslist" :default-sort="{prop:'addtime', order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
@@ -47,7 +50,7 @@
           <el-table-column label="菜肴状态" width="120" class-name="noticeinfo">
             <template scope="scope"><span>{{getShopstatus(scope.row.status)}}</span></template>
           </el-table-column>
-          <el-table-column label="操作" width="200">
+          <el-table-column label="操作" width="200" v-if="isysadmin">
             <template scope="scope">
               <el-button class="btn" size="small" type="danger" v-if="scope.row.status==0" @click="processAdmin(scope.row, '审核')">审核</el-button>
               <el-button class="btn" size="small" type="danger" v-if="scope.row.status==1" @click="processAdmin(scope.row, '通过审核')">通过审核</el-button>
@@ -70,7 +73,7 @@ import { currency } from "@/filters/currency"
 export default {
   data() {
     return {
-      shopid: "1",
+      shopid: "",
       shopname: "",
       page: 1, //页数
       pagesize: 20, //每页显示数
@@ -177,7 +180,7 @@ export default {
       return tasteslist.join(',');
     },
     //获取店铺基本信息
-    getBaseInfo(){
+    searchDineshop(){
       if(this.shopid){
         const urls = ['/admin/shop/getDineshopInfo?shopid='+this.shopid, '/admin/dishes/getTastesList'];
         const requests = urls.map(function(url){ return ajax.get(url, { params: {indicator:{async: true}} }); });
@@ -217,11 +220,18 @@ export default {
   },
   computed: {
     ...mapGetters({
-      
+      isysadmin: 'isysadmin',
+      userinfo: 'userinfo',
+      shopinfo: 'shopinfo'
     }),
   },
   created () {
-    this.searchDishes(); //默认选择数据
+    //门店端
+    if(!this.isysadmin){
+      this.shopid = this.shopinfo?this.shopinfo.id:'';
+      this.searchDineshop();
+      this.getDishesList()
+    }
   },
   destroyed(){
     

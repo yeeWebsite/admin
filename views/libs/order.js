@@ -6,11 +6,17 @@ export function getOrderStatus(status){
   	"3":"配送中",
   	"4":"配送完成",
   	"5":"用餐中",
+	"6":"申请打包",
+	"90":"已打包",
+	"6":"申请打包",
   	"100":"已完成",
   	"-100":"逾期",
   	"-200":"退款中",
   	"-300":"已退款",
-  	"-400":"已取消"
+  	"-400":"已取消",
+  	"-110":"退款待审核",
+  	"-120":"退款审核通过",
+  	"-130":"退款审核不通过"
   }
   if(typeof status != 'undefined' && statusJson[status]) return statusJson[status];
   else return '';

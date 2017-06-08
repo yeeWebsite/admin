@@ -6,10 +6,13 @@
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
         <el-row>
-          <el-col :span="24" class="searchbox">
+          <el-col :span="24" class="searchbox" v-if="isysadmin">
             选择日期范围：<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="选择日期范围" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;&nbsp;&nbsp;
             店铺ID或店铺名称：<el-input class="searchinput" placeholder="店铺ID或店铺名称" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false" @click.stop="getOrderlist">搜索</el-button>
+          </el-col>
+          <el-col :span="24" class="searchbox" v-else>
+            <span style="margin-left:20px; line-height:36px;">门店：{{(shopinfo&&shopinfo.shopname)?shopinfo.shopname:'-'}}</span>
           </el-col>
         </el-row>
         <el-table :data="orderlist" empty-text="暂无数据..." style="width: 100%" id="loading">
@@ -28,7 +31,26 @@
           <el-table-column prop="statustr" label="状态" width="96"></el-table-column>
           <el-table-column label="操作" width="100">
             <template scope="scope">
-              <span>-</span>
+              <el-popover v-if="scope.row.status == 2" ref="popoverDistrip" placement="left" trigger="click" v-model="scope.row.showpopover">
+                <el-table :data="distriplist">
+                  <el-table-column property="distripname" label="配送员" width="80"></el-table-column>
+                  <el-table-column property="distripmobile" label="联系电话" width="150"></el-table-column>
+                  <el-table-column label="-" width="80">
+                    <template scope="subscope">
+                      <el-button type="primary" size="small" @click.stop="processOrder(scope.row, 6, subscope.row)">申请打包</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-popover>
+
+
+	      <el-button v-if="scope.row.status == -110" size="small" @click.stop="processAdmin(scope.row, -120)">通过审核</el-button>
+	      <el-button v-if="scope.row.status == -110" size="small" @click.stop="processAdmin(scope.row, -130)">已打审核不通过</el-button>
+
+              <el-button v-if="scope.row.status == 5" size="small" @click.stop="processOrder(scope.row, 5);">用餐结束</el-button>
+              <el-button v-else-if="scope.row.status == 6" size="small" @click.stop="processOrder(scope.row, 6);">去打包</el-button>
+
+              <span v-else>-</span>
             </template>
           </el-table-column>
         </el-table>
@@ -104,6 +126,73 @@ export default {
       this.page = page;
       this.getOrderlist();
     },
+    deliveryOrder(shopid) {
+      ajax.get('/admin/shop/getDistripList', {params:{shopid:shopid}}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          this.distriplist = response.data.list;
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
+    },
+    processOrder(order, status, info = {}){
+      let params = {userid: order.userid,  orderid: order.orderid, status: status };
+      let callback;
+      if(status == 5){ //用餐中
+        callback = () => {
+          order.status = 100;
+          order.statustr = getOrderStatus(order.status);
+          this.$message.success('用餐结束');
+        }
+      }else if(status == 6) { //申请打包
+        callback = () => {
+          order.status = 90;
+          order.statustr = getOrderStatus(order.status);
+          this.$message.success('打包完成');
+        }
+      }
+      ajax.get('/admin/order/processOrder', {params:params}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          if(callback) callback();
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
+    },
+    //退款审核管理
+    processAdmin(order, status, info = {}){
+        let callback;
+	if (status == -120){
+	  status = 1;
+	  callback = () => {
+            order.status = -200;
+            order.statustr = getOrderStatus(order.status);
+            this.$message.success('审核通过');
+          }
+	}else if (status == -130){
+	  status = 0;
+	  callback = () => {
+            order.status = -130;
+            order.statustr = getOrderStatus(order.status);
+            this.$message.success('审核不通过');
+          }
+	}
+	console.log(order);
+	let params = {userid: order.userid,  orderid: order.orderid, checkupstatus: status };
+	ajax.get('/admin/order/checkupCancelOrder', {params:params}).then((response) => {
+	if (response.data && response.data.code > 0) {
+           if(callback) callback();
+        } else {
+           this.$message.error(response.data.msg);
+        }
+        }).catch((e) => {
+          this.$message.error(e.toString());
+        });
+    },
     //获取订单列表
     getOrderlist(){
       const startime = timefilter(this.daterange[0], 'yyyy/mm/dd');
@@ -136,6 +225,7 @@ export default {
           orderinfo['allmoney'] = currency(list[i].allmoney);
           orderinfo['eatinfo'] = '就餐人数：'+list[i].mealsnum+'<br>就餐时间：'+timefilter(new Date(list[i].startime), 'yyyy/mm/dd hh:ii:ss')+' - '+timefilter(new Date(list[i].endtime), 'yyyy/mm/dd hh:ii:ss');
           orderinfo['status'] = list[i].status;
+	  orderinfo['userid'] = list[i].userid;
           orderinfo['statustr'] = getOrderStatus(list[i].status);
           this.orderlist.push(orderinfo);
         }
@@ -152,7 +242,9 @@ export default {
   },
   computed: {
     ...mapGetters({
-
+      isysadmin: 'isysadmin',
+      userinfo: 'userinfo',
+      shopinfo: 'shopinfo'
     }),
   },
   created () {
