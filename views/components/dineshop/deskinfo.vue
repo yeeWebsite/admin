@@ -8,7 +8,7 @@
         <!-- 页面输入内容 -->
         <el-row type="flex">
           <el-col :span="24" class="searchbox" v-if="isysadmin">
-            店铺ID或店铺名模糊搜索：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
+            店铺ID或店铺名模糊搜索：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="search"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
             <span style="margin-left:20px;">门店：{{shopname?shopname:'-'}}</span>
             <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="addDeskinfo()">新增桌型</el-button>
@@ -20,17 +20,24 @@
         </el-row>
         <el-table :data="desklist"  :default-sort="{prop:'seatnum',order:'ascending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
           <el-table-column type="index" label="序号" width="120"></el-table-column>
-          <el-table-column prop="id" label="桌型ID"></el-table-column>
+          <el-table-column prop="deskid" label="桌型编号"></el-table-column>
           <el-table-column label="桌型名称">
             <template scope="scope">
               <span>{{scope.row.seatnum}}人桌</span>
             </template>
           </el-table-column>
           <el-table-column prop="desknum" label="放号数量"></el-table-column>
-          <el-table-column label="操作" width="200">
+          <el-table-column prop="ordernum" label="已预订数量"></el-table-column>
+          <el-table-column prop="status" label="桌型状态"></el-table-column>
+          <el-table-column label="桌型状态" class-name="noticeinfo">
+            <template scope="scope">
+              <span v-if="scope.row.status == 0">已删除</span>
+              <span v-else>可用</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120">
             <template scope="scope">
               <el-button size="small" @click.stop="modDeskinfo(scope.row)">修改</el-button>
-              <el-button size="small" @click.stop="delDeskinfo(scope.row.id)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -38,13 +45,20 @@
         <el-dialog class="discount-dialog" :title="dialog.dialogtitle" :visible.sync="dialog.showdialog" size="tiny" :close-on-click-modal="false">
           <div class="deskinfoDialog">
             <el-form ref="deskform" :model="dialog.data" label-width="80px" label-position="right">
-              <el-form-item label="就餐人数" prop="seatnum" :rules="[{required:true,message:'请输入就餐人数'},{type:'number',message:'就餐人数必须为数字值'}]">
-                <el-input v-model.number="dialog.data.seatnum" auto-complete="off" class="inlineinput">
-                  <template slot="append">人桌</template>
-                </el-input>
+              <el-form-item v-if="dialog.type=='modify'" label="桌型编号"><span>{{dialog.data.deskid}}</span></el-form-item>
+              <el-form-item label="就餐人数" prop="seatnum" :rules="[{required:true,message:'请选择就餐人数'}]">
+                <el-select v-model="dialog.data.seatnum" placeholder="请选择">
+                  <el-option v-for="seatnum in seatnumlist" :key="seatnum.value" :label="seatnum.label" :value="seatnum.value" :disabled="false"></el-option>
+                </el-select>
               </el-form-item>
               <el-form-item label="桌型数量" prop="desknum" :rules="[{required:true,message:'请输入桌型数量'},{type:'number',message:'桌型数量必须为数字值'}]">
                 <el-input v-model.number="dialog.data.desknum" class="inlineinput"></el-input>
+              </el-form-item>
+              <el-form-item v-if="dialog.type=='add'" label="桌型编号" prop="deskid" :rules="[{required:true,message:'请输入桌型数量'}]">
+                <el-input v-model.number="dialog.data.deskid" class="inlineinput"></el-input>
+              </el-form-item>
+              <el-form-item v-if="dialog.type=='modify'" label="是否可用">
+                <el-switch on-text="" off-text="" v-model="dialog.data.status" on-value="1" off-value="0" style="margin-right:10px;"></el-switch>
               </el-form-item>
             </el-form>
           </div>
@@ -64,16 +78,26 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   data() {
     return {
+      search: '',
       shopid: '',
       shopname: '',
       desklist:[],
+      seatnumlist: [
+        { value: 2, label: '2人桌' },
+        { value: 4, label: '4人桌' },
+        { value: 6, label: '6人桌' },
+        { value: 12, label: '12人桌' }
+      ],
       dialog:{
+        type:'',
         showdialog: false,
         dialogtitle: '',
         data:{
           id: "",
           seatnum: '',
-          desknum: ''
+          desknum: '',
+          deskid: '',
+          status: '1', //是否可用
         }
       }
     }
@@ -81,12 +105,12 @@ export default {
   methods: {
     //搜索店铺
     searchDineshop(){
-      this.getDesklist();
+      this.getDesklist(this.search);
     },
     //获取店铺桌型列表信息
-    getDesklist(){
-      if(this.shopid){
-        ajax.get('/admin/shop/getDesklist', {params:{ shopid:this.shopid }}).then((response) => {
+    getDesklist(shopid){
+      if(shopid){
+        ajax.get('/admin/shop/getDesklist', {params:{ shopid: shopid }}).then((response) => {
           if (response.data && response.data.code > 0) {
             const info = response.data.info;
             const list = response.data.list;
@@ -102,52 +126,59 @@ export default {
     },
     //添加桌型信息
     addDeskinfo(){
+      this.dialog.type = 'add';
       this.dialog.showdialog = true;
       this.dialog.dialogtitle = '添加桌型';
+      this.dialog.data.deskid = '';
       this.dialog.data.seatnum = '';
       this.dialog.data.desknum = '';
     },
     //修改桌型信息
     modDeskinfo(deskinfo){
+      this.dialog.type = 'modify';
       this.dialog.showdialog = true;
       this.dialog.dialogtitle = '修改桌型';
-      console.log(deskinfo);
       this.dialog.data = {
-        id: deskinfo.id,
+        deskid: deskinfo.deskid,
         seatnum: parseInt(deskinfo.seatnum),
         desknum: parseInt(deskinfo.desknum),
+        status: '1',
       };
     },
     processDeskinfo(deskform){
       this.$refs[deskform].validate((valid) => {
         if (valid) {
           let url = '/admin/shop/addDesk';
-          let params = {shopid:this.shopid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum};
+          let params = {shopid:this.shopid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum, deskid: this.dialog.data.deskid};
           let fn = (data) => {
             this.desklist.push({
-              id: data.info.deskid,
               shopid: this.shopid,
               seatnum: this.dialog.data.seatnum,
-              desknum: this.dialog.data.desknum
+              desknum: this.dialog.data.desknum,
+              deskid: this.dialog.data.deskid,
+              ordernum: 0,
+              status: 1,
             });
           }
-          if(this.dialog.data.id){
+          //如果是修改则需处理
+          if(this.dialog.type == 'modify'){
             url = '/admin/shop/modDesk';
-            params = {deskid:this.dialog.data.id, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum};
+            params = {shopid:this.shopid, deskid:this.dialog.data.deskid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum, status:this.dialog.data.status};
             fn = (data) => {
               for (var i = 0; i < this.desklist.length; i++) {
-                if(this.desklist[i].id == this.dialog.data.id){
+                if(this.desklist[i].deskid == this.dialog.data.deskid){
                   this.desklist[i].seatnum = this.dialog.data.seatnum;
                   this.desklist[i].desknum = this.dialog.data.desknum;
+                  this.desklist[i].status = this.dialog.data.status;
                   break;
                 }
               }
             }
           }
           ajax.get(url, {params:params}).then((response) => {
+            this.dialog.showdialog = false;
             if (response.data && response.data.code > 0) {
               fn(response.data);
-              this.dialog.showdialog = false;
             } else {
               this.$message.error(response.data.msg);
             }
@@ -158,48 +189,24 @@ export default {
           return false;
         }
       });
-    },
-    //删除桌型信息
-    delDeskinfo(deskid){
-      this.$confirm('删除的桌型信息将不可恢复，是否继续？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-        closeOnClickModal: false,
-        callback: (action) => {
-          if(action == 'confirm'){
-            ajax.get('/admin/shop/delDesk', {params:{ deskid:deskid }}).then((response) => {
-              if (response.data && response.data.code > 0) {
-                for (var i = 0; i < this.desklist.length; i++) {
-                  if(this.desklist[i].id == deskid){
-                    this.desklist.splice(i,1); 
-                    break;
-                  }
-                }
-              } else {
-                this.$message.error(response.data.msg);
-              }
-            }).catch((e) => {
-              this.$message.error(e.toString());
-            });
-          }
-        }
-      });
     }
   },
   computed: {
     ...mapGetters({
       isysadmin: 'isysadmin',
       userinfo: 'userinfo',
-      shopinfo: 'shopinfo'
+      shopinfo: 'shopinfo',
+      defshopid: 'defshopid'
     }),
   },
   created () {
     //门店端
     if(!this.isysadmin){
       this.shopid = this.shopinfo?this.shopinfo.id:'';
-      this.searchDineshop();
+    }else{
+      this.shopid = this.defshopid;
     }
+    this.getDesklist(this.shopid);
   },
   destroyed(){
     

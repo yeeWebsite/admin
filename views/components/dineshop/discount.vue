@@ -8,7 +8,7 @@
         <!-- 页面输入内容 -->
         <el-row type="flex">
           <el-col :span="24" class="searchbox" v-if="isysadmin">
-            店铺ID或店铺名模糊搜索：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
+            店铺ID或店铺名模糊搜索：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="search"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
             <span style="margin-left:20px;">门店：{{shopname?shopname:'-'}}</span>
             <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="showTimeslot()">编辑时间段</el-button>
@@ -74,7 +74,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="折扣:">
-          <el-input v-model="adddiscountdata.num" placeholder="请输入折扣"></el-input>
+          <el-input v-model="adddiscountdata.num" placeholder="请输入折扣（1~10整数）"></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -118,6 +118,7 @@ import { timefilter } from "@/filters/timefilter"
 export default {
   data() {
     return {
+      search: "",
       shopid: "",
       shopname: "",
       shopdishlist: [],
@@ -151,17 +152,19 @@ export default {
   methods: {
     //搜索店铺
     searchDineshop(){
-      this.getDineshopInfo();
-      this.getDineshopDiscount();
+      this.getDineshopInfo(this.search);
     },
     //获取店铺信息
-    getDineshopInfo(){
-      if(this.shopid){
-        ajax.get('/admin/shop/getDineshopInfo', {params:{ shopid:this.shopid, indicator:{async:true} }}).then((response) => {
+    getDineshopInfo(shopid){
+      if(shopid){
+        ajax.get('/admin/shop/getDineshopInfo', {params:{ shopid:shopid, indicator:{async:true} }}).then((response) => {
           if (response.data && response.data.code > 0) {
             const info = response.data.info;
+            console.log(info);
+            this.shopid = info.id;
             this.shopname = info.shopname;
             this.shopdishlist = info.disheslist;
+            this.getDineshopDiscount();
           } else {
             this.$message.error(response.data.msg);
           }
@@ -366,15 +369,18 @@ export default {
     ...mapGetters({
       isysadmin: 'isysadmin',
       userinfo: 'userinfo',
-      shopinfo: 'shopinfo'
+      shopinfo: 'shopinfo',
+      defshopid: 'defshopid'
     }),
   },
   created () {
     //门店端
     if(!this.isysadmin){
       this.shopid = this.shopinfo?this.shopinfo.id:'';
-      this.searchDineshop();
+    }else{
+      this.shopid = this.defshopid;
     }
+    this.getDineshopInfo(this.shopid);
   },
   destroyed(){
     

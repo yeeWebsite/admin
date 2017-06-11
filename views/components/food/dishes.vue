@@ -8,8 +8,8 @@
         <!-- 页面输入内容 -->
         <el-row type="flex">
           <el-col :span="24" class="searchbox" v-if="isysadmin">
-            输入店铺ID：<el-input class="searchinput" placeholder="店铺ID" icon="search" v-model="shopid"></el-input>&nbsp;&nbsp;
-            <el-button type="primary" :loading="false"  @click.stop="searchDishes()">搜索</el-button>
+            店铺ID或店铺名模糊搜索：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="search"></el-input>&nbsp;&nbsp;
+            <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
             <span style="margin-left:20px;">门店：{{shopname?shopname:'-'}}</span>
             <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="addDishes()">新增菜肴</el-button>
           </el-col>
@@ -73,6 +73,7 @@ import { currency } from "@/filters/currency"
 export default {
   data() {
     return {
+      search: "",
       shopid: "",
       shopname: "",
       page: 1, //页数
@@ -87,9 +88,8 @@ export default {
       this.page = page;
       this.getDishesList();
     },
-    searchDishes(){
-      this.getBaseInfo();
-      this.getDishesList();
+    searchDineshop(){
+      this.getBaseInfo(this.search);
     },
     //店铺分类信息管理
     dishClassify(){
@@ -180,14 +180,16 @@ export default {
       return tasteslist.join(',');
     },
     //获取店铺基本信息
-    searchDineshop(){
-      if(this.shopid){
-        const urls = ['/admin/shop/getDineshopInfo?shopid='+this.shopid, '/admin/dishes/getTastesList'];
+    getBaseInfo(shopid){
+      if(shopid){
+        const urls = ['/admin/shop/getDineshopInfo?shopid='+shopid, '/admin/dishes/getTastesList'];
         const requests = urls.map(function(url){ return ajax.get(url, { params: {indicator:{async: true}} }); });
         ajax.all(requests).then(ajax.spread((shopinfo, tasteslist) => {
           if (shopinfo.data && shopinfo.data.code > 0) {
             const info = shopinfo.data.info;
+            this.shopid = info.id;
             this.shopname = info.shopname;
+            this.getDishesList();
           }
           if (tasteslist.data && tasteslist.data.code > 0) {
             const list = tasteslist.data.list;
@@ -204,6 +206,7 @@ export default {
     getDishesList(){
       if(this.shopid){
         ajax.get('/admin/shop/getDishesList', {params:{ page: this.page, pagesize: this.pagesize, shopid:this.shopid}}).then((response) => {
+          this.disheslist = [];
           if (response.data && response.data.code > 0) {
             const info = response.data.info;
             const list = response.data.list;
@@ -222,16 +225,18 @@ export default {
     ...mapGetters({
       isysadmin: 'isysadmin',
       userinfo: 'userinfo',
-      shopinfo: 'shopinfo'
+      shopinfo: 'shopinfo',
+      defshopid: 'defshopid'
     }),
   },
   created () {
     //门店端
     if(!this.isysadmin){
       this.shopid = this.shopinfo?this.shopinfo.id:'';
-      this.searchDineshop();
-      this.getDishesList()
+    }else{
+      this.shopid = this.defshopid;
     }
+    this.getBaseInfo(this.shopid);
   },
   destroyed(){
     

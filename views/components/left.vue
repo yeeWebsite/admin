@@ -22,10 +22,13 @@
     <el-submenu index="money">
       <template slot="title">资金管理</template>
       <el-menu-item index="/money/">押金/余额</el-menu-item>
-      <el-menu-item index="/money/lucre/">门店收益金</el-menu-item>
+      <!-- <el-menu-item index="/money/lucre/">门店收益金</el-menu-item> -->
     </el-submenu>
-    <el-menu-item index="/user/">用户管理</el-menu-item>
-    <el-menu-item index="/user/power/">权限管理</el-menu-item>
+    <el-submenu index="user">
+      <template slot="title">用户管理</template>
+      <el-menu-item index="/user/admin/">门店用户管理</el-menu-item>
+      <!-- <el-menu-item index="/user/">订餐用户管理</el-menu-item> -->
+    </el-submenu>
   </el-menu>
   <el-menu :router="true" :default-active="defaultActive" v-else>
     <el-menu-item index="/">我的门店</el-menu-item>

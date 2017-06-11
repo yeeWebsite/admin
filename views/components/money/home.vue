@@ -21,7 +21,7 @@
           <el-table-column prop="deposit" label="押金"></el-table-column>
           <el-table-column prop="balance" label="余额"></el-table-column>
         </el-table>
-        <pageComponent :total="21" :callback="getCurrentPage"></pageComponent>
+        <pageComponent :page="page" :pagesize="pagesize" :total="allnum" :callback="getCurrentPage"></pageComponent>
       </el-col>
     </el-row>
     <el-dialog
@@ -53,6 +53,9 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   data() {
     return {
+      page: 1,
+      pagesize: 20,
+      allnum: 3,
       AtotalMoney:'3593405.00',
       BtotalMoney:'3593405.00',
       moneylist: [

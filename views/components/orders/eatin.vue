@@ -7,8 +7,9 @@
         <breadtitleComponent></breadtitleComponent>
         <el-row>
           <el-col :span="24" class="searchbox" v-if="isysadmin">
-            选择日期范围：<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="选择日期范围" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;&nbsp;&nbsp;
-            店铺ID或店铺名称：<el-input class="searchinput" placeholder="店铺ID或店铺名称" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
+            选择日期范围：<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="选择日期范围" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;
+            输入店铺ID或店铺名：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="shopsearch"></el-input>&nbsp;&nbsp;
+            输入订单ID：<el-input class="searchinput" placeholder="订单ID" icon="search" v-model="ordersearch"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false" @click.stop="getOrderlist">搜索</el-button>
           </el-col>
           <el-col :span="24" class="searchbox" v-else>
@@ -29,7 +30,7 @@
           </el-table-column>
           <el-table-column prop="allmoney" label="价格" class-name="noticeinfo" width="110"></el-table-column>
           <el-table-column prop="statustr" label="状态" width="96"></el-table-column>
-          <el-table-column label="操作" width="100">
+          <el-table-column label="操作" width="180">
             <template scope="scope">
               <el-popover v-if="scope.row.status == 2" ref="popoverDistrip" placement="left" trigger="click" v-model="scope.row.showpopover">
                 <el-table :data="distriplist">
@@ -83,7 +84,6 @@ export default {
     return {
       //UI组件数据
       daterange: [new Date(new Date().getTime() - 7 * 24 * 3600 * 1000), new Date()],
-      searchname: '',
       datePickerOptions: {
         shortcuts: [{
           text: '最近一周',
@@ -112,6 +112,8 @@ export default {
         }]
       },
       //页面data数据源
+      shopsearch: '', //店铺搜索
+      ordersearch: '', //订单搜索
       page: 1,
       pagesize: 20,
       allnum: 0,
@@ -122,6 +124,9 @@ export default {
     }
   },
   methods: {
+    searchOrderlist(){
+      this.getOrderlist();
+    },
     getCurrentPage(page){
       this.page = page;
       this.getOrderlist();
@@ -165,39 +170,38 @@ export default {
     },
     //退款审核管理
     processAdmin(order, status, info = {}){
-        let callback;
-	if (status == -120){
-	  status = 1;
-	  callback = () => {
-            order.status = -200;
-            order.statustr = getOrderStatus(order.status);
-            this.$message.success('审核通过');
-          }
-	}else if (status == -130){
-	  status = 0;
-	  callback = () => {
-            order.status = -130;
-            order.statustr = getOrderStatus(order.status);
-            this.$message.success('审核不通过');
-          }
-	}
-	console.log(order);
-	let params = {userid: order.userid,  orderid: order.orderid, checkupstatus: status };
-	ajax.get('/admin/order/checkupCancelOrder', {params:params}).then((response) => {
-	if (response.data && response.data.code > 0) {
-           if(callback) callback();
-        } else {
-           this.$message.error(response.data.msg);
+      let callback;
+    	if (status == -120){
+    	  status = 1;
+    	  callback = () => {
+          order.status = -200;
+          order.statustr = getOrderStatus(order.status);
+          this.$message.success('审核通过');
         }
-        }).catch((e) => {
-          this.$message.error(e.toString());
-        });
+    	}else if (status == -130){
+    	  status = 0;
+    	  callback = () => {
+          order.status = -130;
+          order.statustr = getOrderStatus(order.status);
+          this.$message.success('审核不通过');
+        }
+    	}
+    	let params = {userid: order.userid,  orderid: order.orderid, checkupstatus: status };
+    	ajax.get('/admin/order/checkupCancelOrder', {params:params}).then((response) => {
+    	if (response.data && response.data.code > 0) {
+         if(callback) callback();
+      } else {
+         this.$message.error(response.data.msg);
+      }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
     },
     //获取订单列表
     getOrderlist(){
       const startime = timefilter(this.daterange[0], 'yyyy/mm/dd');
       const endtime = timefilter(this.daterange[1], 'yyyy/mm/dd');
-      const params = { startime: startime, endtime: endtime, shopname: this.searchname, page: this.page, pagesize: this.pagesize, ordertype:2 };
+      const params = { startime: startime, endtime: endtime, shopid: this.shopsearch, orderid: this.ordersearch, page: this.page, pagesize: this.pagesize, ordertype:2 };
       ajax.get('/admin/order/getOrderlist', {params:params}).then((response) => {
         if (response.data && response.data.code > 0) {
           this.delayLoad(response.data['info'], response.data['list']);
@@ -210,8 +214,8 @@ export default {
     }, 
     delayLoad(info, list){
       this.allnum = info.allnum || list.length;
+      this.orderlist = [];
       if(list && list.length > 0){
-        this.orderlist = [];
         for (var i = list.length - 1; i >= 0; i--) {
           let orderinfo = {};
           orderinfo['showpopover'] = false;
@@ -244,12 +248,18 @@ export default {
     ...mapGetters({
       isysadmin: 'isysadmin',
       userinfo: 'userinfo',
-      shopinfo: 'shopinfo'
+      shopinfo: 'shopinfo',
+      defshopid: 'defshopid',
     }),
   },
   created () {
-    //初始获取数据
-    this.getOrderlist();
+    //门店端
+    if(!this.isysadmin){
+      this.shopsearch = this.shopinfo?this.shopinfo.id:'-';
+    }else{
+      this.shopsearch = this.defshopid;
+    }
+    this.searchOrderlist();
   },
   destroyed(){
     

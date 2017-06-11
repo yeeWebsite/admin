@@ -44,7 +44,12 @@ export default {
         if (response.data && response.data.code > 0) {
           const info = response.data.info;
           this.username = info.username || '';
-        } else {
+        } else if(response.data.code == -10001){
+          //服务端已退出登录，执行前端退出登录
+          this.$store.dispatch('setUserLogout').then(() => {
+            this.$router.push('/user/login/');
+          });
+        }else {
           this.$message.error(response.data.msg);
         }
       }).catch((e) => {

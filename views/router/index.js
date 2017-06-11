@@ -120,6 +120,11 @@ export default new router({
               component: r => require.ensure([], () => r(require('components/user/home.vue')), 'user')
             },
             {
+              name:'门店用户管理',
+              path:'admin', 
+              component: r => require.ensure([], () => r(require('components/user/admin.vue')), 'user')
+            },
+            {
               name:'用户登录',
               path:'login', 
               component: r => require.ensure([], () => r(require('components/user/login.vue')), 'user')

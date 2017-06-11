@@ -48,13 +48,11 @@
               <template slot="append">元</template>
             </el-input>
           </el-form-item>
-          <el-form-item label="默认折扣">
-              <el-input v-model="dishinfo.discount" class="inlineinput">
-              <template slot="append">折</template>
-            </el-input>
+          <el-form-item label="默认折扣" prop="discount" :rules="[{required:true,message:'请输入菜肴价格'},{type:'number',message:'菜肴价格必须为数字值'}]">
+            <el-input v-model.number="dishinfo.discount" class="inlineinput" style="width:220px;"><template slot="append">折（请输入1~10整数）</template></el-input>
           </el-form-item>
-	  <el-form-item label="菜肴月销量">
-            <el-input v-model="dishinfo.salenum" placeholder="10" class="inlineinput"></el-input> 份
+	        <el-form-item label="菜肴月销量">
+            <el-input v-model="dishinfo.salenum" placeholder="10" class="inlineinput"><template slot="append">份</template> </el-input>
           </el-form-item>
           <el-form-item label="所属店铺">{{dishinfo.shopname}}</el-form-item>
           <el-form-item>
@@ -147,6 +145,9 @@
       addDishes(form) {
         this.$refs[form].validate((valid) => {
           if (valid) {
+            if(this.dishinfo.discount > 10 || this.dishinfo.discount < 1){
+              return this.$message.error('折扣力度必须在1~10之间!');
+            }
             const params = {
               adduser: this.userinfo.userid,
               dishid: this.dishinfo.dishid, //菜肴ID

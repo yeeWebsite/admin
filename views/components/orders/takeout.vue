@@ -8,18 +8,19 @@
         <el-row>
           <el-col :span="24" class="searchbox" v-if="isysadmin">
             选择日期范围：<el-date-picker v-model="daterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="选择日期范围" :picker-options="datePickerOptions"></el-date-picker>&nbsp;&nbsp;
-            输入店铺名或订单号：<el-input class="searchinput" placeholder="店铺名或订单号" icon="search" v-model="searchname"></el-input>&nbsp;&nbsp;
-            <el-button type="primary" :loading="false" @click.stop="getOrderlist">搜索</el-button>
+            输入店铺ID或店铺名：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="shopsearch"></el-input>&nbsp;&nbsp;
+            输入订单ID：<el-input class="searchinput" placeholder="订单ID" icon="search" v-model="ordersearch"></el-input>&nbsp;&nbsp;
+            <el-button type="primary" :loading="false" @click.stop="searchOrderlist()">搜索</el-button>
           </el-col>
           <el-col :span="24" class="searchbox" v-else>
             <span style="margin-left:20px; line-height:36px;">门店：{{(shopinfo&&shopinfo.shopname)?shopinfo.shopname:'-'}}</span>
           </el-col>
         </el-row>
         <el-table :data="orderlist" :default-sort="{prop:'orderid',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
-          <el-table-column type="index" label="序号" width="50"></el-table-column>
-          <el-table-column prop="orderid" label="订单号" width="110"></el-table-column>
-	  <el-table-column prop="shopname" label="店铺名" width="100"></el-table-column>
-          <el-table-column label="菜肴名称" width="200" class-name="noticeinfo">
+          <el-table-column type="index" label="序号" width="64"></el-table-column>
+          <el-table-column prop="orderid" label="订单号" width="120"></el-table-column>
+	        <el-table-column prop="shopname" label="店铺名" :show-overflow-tooltip="true"></el-table-column>
+          <el-table-column label="菜肴名称" width="160" :show-overflow-tooltip="true" class-name="noticeinfo">
             <template scope="scope"><span v-html="scope.row.orderdetail"></span></template>
           </el-table-column>
           <el-table-column prop="addtime" label="订单时间" width="176"></el-table-column>
@@ -27,7 +28,7 @@
           <el-table-column label="配送信息" :show-overflow-tooltip="true">
             <template scope="scope"><span v-html="scope.row.deliveryaddress"></span></template>
           </el-table-column>
-          <el-table-column label="状态" width="96">
+          <el-table-column label="状态" width="110">
             <template scope="scope">
               <span v-html="scope.row.statustr"></span>
               <el-tooltip v-if="scope.row.status == 3" :content="'配送员信息('+scope.row.deliveryinfo+')'" placement="left">
@@ -35,7 +36,7 @@
               </el-tooltip>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100">
+          <el-table-column label="操作" width="180">
             <template scope="scope">
               <el-popover v-if="scope.row.status == 2" ref="popoverDistrip" placement="left" trigger="click" v-model="scope.row.showpopover">
                 <el-table :data="distriplist">
@@ -73,7 +74,6 @@ export default {
     return {
       //UI组件数据
       daterange: [new Date(new Date().getTime() - 7 * 24 * 3600 * 1000), new Date()],
-      searchname: '',
       datePickerOptions: {
         shortcuts: [{
           text: '最近一周',
@@ -102,6 +102,8 @@ export default {
         }]
       },
       //页面data数据源
+      shopsearch: '', //店铺搜索
+      ordersearch: '', //订单搜索
       page: 1,
       pagesize: 20,
       allnum: 0,
@@ -110,6 +112,9 @@ export default {
     }
   },
   methods: {
+    searchOrderlist(){
+      this.getOrderlist();
+    },
     getCurrentPage(page){
       this.page = page;
       this.getOrderlist();
@@ -165,7 +170,7 @@ export default {
     getOrderlist(){
       const startime = timefilter(this.daterange[0], 'yyyy/mm/dd');
       const endtime = timefilter(this.daterange[1], 'yyyy/mm/dd');
-      const params = { startime: startime, endtime: endtime, shopname: this.searchname, page: this.page, pagesize: this.pagesize, ordertype:1 };
+      const params = { startime: startime, endtime: endtime, shopid: this.shopsearch, orderid: this.ordersearch, page: this.page, pagesize: this.pagesize, ordertype:1 };
       ajax.get('/admin/order/getOrderlist', {params:params}).then((response) => {
         if (response.data && response.data.code > 0) {
           this.delayLoad(response.data['info'], response.data['list']);
@@ -178,8 +183,8 @@ export default {
     }, 
     delayLoad(info, list){
       this.allnum = info.allnum || list.length;
+      this.orderlist = [];
       if(list && list.length > 0){
-        this.orderlist = [];
         for (var i = list.length - 1; i >= 0; i--) {
           let orderinfo = {};
           orderinfo['showpopover'] = false;
@@ -210,12 +215,18 @@ export default {
     ...mapGetters({
       isysadmin: 'isysadmin',
       userinfo: 'userinfo',
-      shopinfo: 'shopinfo'
+      shopinfo: 'shopinfo',
+      defshopid: 'defshopid',
     }),
   },
   created () {
-    //初始获取数据
-    this.getOrderlist();
+    //门店端
+    if(!this.isysadmin){
+      this.shopsearch = this.shopinfo?this.shopinfo.id:'-';
+    }else{
+      this.shopsearch = this.defshopid;
+    }
+    this.searchOrderlist();
   },
   destroyed(){
     

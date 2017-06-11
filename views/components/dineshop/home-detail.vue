@@ -95,7 +95,7 @@
 	  minconsume:0,//最小预约金额
           isaway:1, //是否支持外卖
 	  servicecharge:0,//门店服务费
-          opentime: [timefilter(new Date, 'yyyy-mm-dd ')+'09:00:00', timefilter(new Date, 'yyyy-mm-dd ')+'23:00:00' ], //营业时间
+          opentime: [new Date(timefilter(new Date, 'yyyy-mm-dd ')+'09:00:00'), new Date(timefilter(new Date, 'yyyy-mm-dd ')+'23:00:00')], //营业时间
           shophone:'', //联系电话
           address: '', //店铺地址 
         },
@@ -117,15 +117,8 @@
             //解析营业时间
             let opentime = info.opentime.split('-');
             for (var i = 0; i < opentime.length; i++) {
-      	      let tempStr = opentime[i].trim();
-      	      if (tempStr == '0NaN:0NaN'){
-                if (i == 0){
-                  tempStr = '09:00';
-                }else if (i == 1){
-                  tempStr = '23:00';
-                }
-      	      }
-              opentime[i] = timefilter(new Date, 'yyyy-mm-dd ')+tempStr+':00';
+              const _opentime = timefilter(new Date(), 'yyyy-mm-dd ')+opentime[i]+':00';
+              opentime[i] = new Date(_opentime);
             }
             this.filelist = [{url: info.shopicon}];
             this.shopinfo.shopname = info.shopname;
@@ -174,9 +167,9 @@
               minprice: this.shopinfo.minprice, //最低配送金额
               preconsume: this.shopinfo.preconsume, //人均消费
               isbooking: this.shopinfo.isbooking, //是否可预订
-	      minconsume: this.shopinfo.minconsume,//最小预约金额
+	            minconsume: this.shopinfo.minconsume,//最小预约金额
               isaway: this.shopinfo.isaway, //是否支持外卖
-	      servicecharge: this.shopinfo.servicecharge,//门店服务费
+	            servicecharge: this.shopinfo.servicecharge,//门店服务费
               opentime: opentimestr, //营业时间
               shophone: this.shopinfo.shophone, //联系电话
               address: this.shopinfo.address, //店铺地址 
@@ -187,7 +180,7 @@
                 this.$alert('操作成功！', '', {
                   confirmButtonText: '确定',
                   callback: action => {
-                    if(this.isysadmin){
+                    if(!this.isysadmin){
                       this.getShopinfoByuser();
                     }else{
                       this.$router.push('/dineshop/');
@@ -228,22 +221,27 @@
       },
       getShopinfoByuser(){
         const params = { userid: this.userinfo.userid, indicator:{async:true} };
-        ajax.get('/admin/shop/getUserDineshopInfo', {params:params}).then((response) => {
-          if (response.data && response.data.code > 0) {
-            const info = response.data.info;
-            if(typeof info == 'object' && info.id){
-              this.$store.dispatch('setShopinfo', info).then(() => {
+        //若没有店铺ID属于新增
+        if(!this.shopinfo.shopid){
+          ajax.get('/admin/shop/getUserDineshopInfo', {params:params}).then((response) => {
+            if (response.data && response.data.code > 0) {
+              const info = response.data.info;
+              if(typeof info == 'object' && info.id){
+                this.$store.dispatch('setShopinfo', info).then(() => {
+                  this.$router.push('/');
+                });
+              }else{
                 this.$router.push('/');
-              });
-            }else{
-              this.$router.push('/');
+              }
+            } else {
+              return this.$message.error(response.data.msg);
             }
-          } else {
-            return this.$message.error(response.data.msg);
-          }
-        }).catch((e) => {
-          return this.$message.error(e.toString());
-        });
+          }).catch((e) => {
+            return this.$message.error(e.toString());
+          });
+        }else{
+          this.$router.push('/');
+        }
       }
     },
     computed: {

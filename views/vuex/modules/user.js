@@ -27,6 +27,7 @@ const state = {
   userck: '',
   platform: 4, //2 android, 3 ios, 5 H5
   shopinfo: '', //门店用户设置对应的门店信息
+  defshopid: 1, //默认门店ID
 }
 
 // getters
@@ -41,7 +42,8 @@ const getters = {
   isysadmin: (state, getters) => {
     return state.userid == 10001;
   },
-  shopinfo: state => state.shopinfo
+  shopinfo: state => state.shopinfo,
+  defshopid: state => state.defshopid
 }
 
 // actions
