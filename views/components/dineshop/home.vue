@@ -44,7 +44,8 @@
               <el-button class="btn" size="small" type="danger" v-if="scope.row.status==0" @click="processAdmin(scope.row, '审核')">审核</el-button>
               <el-button class="btn" size="small" type="danger" v-if="scope.row.status==1" @click="processAdmin(scope.row, '通过审核')">通过审核</el-button>
               <el-button class="btn" size="small" type="danger" v-if="scope.row.status==1" @click="processAdmin(scope.row, '审核不通过')">审核不通过</el-button>
-              <el-button class="btn" size="small" type="danger" v-if="scope.row.status==100||scope.row.status==-100" @click="processAdmin(scope.row, '删除')">删除</el-button>
+              <el-button class="btn" size="small" type="danger" v-if="scope.row.status==100||scope.row.status==-100" @click="processAdmin(scope.row, '下架')">下架</el-button>
+              <el-button class="btn" size="small" type="danger" v-if="scope.row.status==-300" @click="processAdmin(scope.row, '重新提交审核')">重新提交审核</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -91,8 +92,8 @@ export default {
         this.modDineshopstatus(info.shopid, key, () => {
           info.status = -100;
         });
-      }else if(key == '删除'){
-        this.$confirm('请谨慎操作，删除的门店信息将不可恢复，是否继续？', '提示', {
+      }else if(key == '下架'){
+        this.$confirm('请谨慎操作，下架的门店用户将不可访问，是否继续？', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning',
@@ -104,6 +105,10 @@ export default {
               });
             }
           }
+        });
+      }else if(key == '重新提交审核'){
+        this.modDineshopstatus(info.shopid, key, () => {
+          info.status = 0;
         });
       }
     },

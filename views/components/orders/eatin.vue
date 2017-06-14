@@ -43,14 +43,10 @@
                   </el-table-column>
                 </el-table>
               </el-popover>
-
-
-	      <el-button v-if="scope.row.status == -110" size="small" @click.stop="processAdmin(scope.row, -120)">通过审核</el-button>
-	      <el-button v-if="scope.row.status == -110" size="small" @click.stop="processAdmin(scope.row, -130)">已打审核不通过</el-button>
-
+	            <el-button v-if="scope.row.status == -110" size="small" @click.stop="processAdmin(scope.row, -120)">通过审核</el-button>
+	            <el-button v-if="scope.row.status == -110" size="small" @click.stop="processAdmin(scope.row, -130)">已打审核不通过</el-button>
               <el-button v-if="scope.row.status == 5" size="small" @click.stop="processOrder(scope.row, 5);">用餐结束</el-button>
               <el-button v-else-if="scope.row.status == 6" size="small" @click.stop="processOrder(scope.row, 6);">去打包</el-button>
-
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -229,7 +225,7 @@ export default {
           orderinfo['allmoney'] = currency(list[i].allmoney);
           orderinfo['eatinfo'] = '就餐人数：'+list[i].mealsnum+'<br>就餐时间：'+timefilter(new Date(list[i].startime), 'yyyy/mm/dd hh:ii:ss')+' - '+timefilter(new Date(list[i].endtime), 'yyyy/mm/dd hh:ii:ss');
           orderinfo['status'] = list[i].status;
-	  orderinfo['userid'] = list[i].userid;
+	        orderinfo['userid'] = list[i].userid;
           orderinfo['statustr'] = getOrderStatus(list[i].status);
           this.orderlist.push(orderinfo);
         }

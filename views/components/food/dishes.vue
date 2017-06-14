@@ -75,6 +75,7 @@ export default {
     return {
       search: "",
       shopid: "",
+      fontshopid: "",
       shopname: "",
       page: 1, //页数
       pagesize: 20, //每页显示数
@@ -188,6 +189,7 @@ export default {
           if (shopinfo.data && shopinfo.data.code > 0) {
             const info = shopinfo.data.info;
             this.shopid = info.id;
+            this.fontshopid = info.fontshopid;
             this.shopname = info.shopname;
             this.getDishesList();
           }
@@ -205,7 +207,7 @@ export default {
     //获取菜肴信息列表
     getDishesList(){
       if(this.shopid){
-        ajax.get('/admin/shop/getDishesList', {params:{ page: this.page, pagesize: this.pagesize, shopid:this.shopid}}).then((response) => {
+        ajax.get('/admin/shop/getDishesList', {params:{ page: this.page, pagesize: this.pagesize, shopid:this.fontshopid}}).then((response) => {
           this.disheslist = [];
           if (response.data && response.data.code > 0) {
             const info = response.data.info;

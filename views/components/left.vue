@@ -27,7 +27,7 @@
     <el-submenu index="user">
       <template slot="title">用户管理</template>
       <el-menu-item index="/user/admin/">门店用户管理</el-menu-item>
-      <!-- <el-menu-item index="/user/">订餐用户管理</el-menu-item> -->
+      <el-menu-item index="/user/">订餐用户管理</el-menu-item>
     </el-submenu>
   </el-menu>
   <el-menu :router="true" :default-active="defaultActive" v-else>

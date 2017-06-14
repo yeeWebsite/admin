@@ -159,7 +159,7 @@
               tastesid: this.dishinfo.tastesid.join(','), //口味ID
               cuisineid: this.dishinfo.cuisineid, //菜系ID
               classid: this.dishinfo.classid, //分类ID
-              shopid: this.dishinfo.shopid, //所属店铺
+              shopid: this.shopinfo.fontshopid, //所属店铺 添加到前端，则这里显示的是前端店铺ID
 	      salenum: this.dishinfo.salenum,//月销量
               indicator: {async:true}
             };
@@ -193,7 +193,8 @@
     },
     computed: {
       ...mapGetters({
-        userinfo: 'userinfo'
+        userinfo: 'userinfo',
+        shopinfo: 'shopinfo',
       }),
     },
     created () {
