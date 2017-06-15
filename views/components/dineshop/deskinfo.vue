@@ -80,6 +80,7 @@ export default {
     return {
       search: '',
       shopid: '',
+      fontshopid: '',
       shopname: '',
       desklist:[],
       seatnumlist: [
@@ -105,12 +106,32 @@ export default {
   methods: {
     //搜索店铺
     searchDineshop(){
-      this.getDesklist(this.search);
+      //获取店铺信息
+      this.getDineshopInfo(this.search, (fontshopid)=>{
+        this.getDesklist(fontshopid);
+      });
+    },
+    getDineshopInfo(shopid, callback){
+      if(shopid){
+        ajax.get('/admin/shop/getDineshopInfo', {params:{ shopid:shopid, indicator:{async:true} }}).then((response) => {
+          if (response.data && response.data.code > 0) {
+            const info = response.data.info;
+            this.fontshopid = info.fontshopid;
+            if(callback) callback(this.fontshopid);
+          } else {
+            this.$message.error(response.data.msg);
+          }
+        }).catch((e) => {
+          this.$message.error(e.toString());
+        });
+      }
     },
     //获取店铺桌型列表信息
-    getDesklist(shopid){
-      if(shopid){
-        ajax.get('/admin/shop/getDesklist', {params:{ shopid: shopid }}).then((response) => {
+    getDesklist(fontshopid){
+      this.shopname = '-';
+      this.desklist = [];
+      if(fontshopid){
+        ajax.get('/admin/shop/getDesklist', {params:{ shopid: fontshopid }}).then((response) => {
           if (response.data && response.data.code > 0) {
             const info = response.data.info;
             const list = response.data.list;
@@ -149,7 +170,7 @@ export default {
       this.$refs[deskform].validate((valid) => {
         if (valid) {
           let url = '/admin/shop/addDesk';
-          let params = {shopid:this.shopid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum, deskid: this.dialog.data.deskid};
+          let params = {shopid:this.fontshopid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum, deskid: this.dialog.data.deskid};
           let fn = (data) => {
             this.desklist.push({
               shopid: this.shopid,
@@ -163,7 +184,7 @@ export default {
           //如果是修改则需处理
           if(this.dialog.type == 'modify'){
             url = '/admin/shop/modDesk';
-            params = {shopid:this.shopid, deskid:this.dialog.data.deskid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum, status:this.dialog.data.status};
+            params = {shopid:this.fontshopid, deskid:this.dialog.data.deskid, seatnum:this.dialog.data.seatnum, desknum:this.dialog.data.desknum, status:this.dialog.data.status};
             fn = (data) => {
               for (var i = 0; i < this.desklist.length; i++) {
                 if(this.desklist[i].deskid == this.dialog.data.deskid){
@@ -206,7 +227,11 @@ export default {
     }else{
       this.shopid = this.defshopid;
     }
-    this.getDesklist(this.shopid);
+    //获取店铺信息
+    this.getDineshopInfo(this.shopid, (fontshopid)=>{
+      this.getDesklist(fontshopid);
+    });
+    
   },
   destroyed(){
     

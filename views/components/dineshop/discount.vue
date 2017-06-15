@@ -9,7 +9,7 @@
         <el-row type="flex">
           <el-col :span="24" class="searchbox" v-if="isysadmin">
             店铺ID或店铺名模糊搜索：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="search"></el-input>&nbsp;&nbsp;
-            <el-button type="primary" :loading="false"  @click.stop="searchDineshop()">搜索</el-button>
+            <el-button type="primary" :loading="false" @click.stop="searchDineshop()">搜索</el-button>
             <span style="margin-left:20px;">门店：{{shopname?shopname:'-'}}</span>
             <el-button type="primary" style="float: right; margin-right: 16px;" @click.stop="showTimeslot()">编辑时间段</el-button>
           </el-col>
@@ -120,6 +120,7 @@ export default {
     return {
       search: "",
       shopid: "",
+      fontshopid: "",
       shopname: "",
       shopdishlist: [],
       activename: 'discount',
@@ -160,8 +161,8 @@ export default {
         ajax.get('/admin/shop/getDineshopInfo', {params:{ shopid:shopid, indicator:{async:true} }}).then((response) => {
           if (response.data && response.data.code > 0) {
             const info = response.data.info;
-            console.log(info);
             this.shopid = info.id;
+            this.fontshopid = info.fontshopid;
             this.shopname = info.shopname;
             this.shopdishlist = info.disheslist;
             this.getDineshopDiscount();
@@ -175,11 +176,11 @@ export default {
     },
     //获取折扣信息
     getDineshopDiscount(){
+      this.shopdata = [];
       if(this.shopid){
         ajax.get('/admin/shop/getDineshopDiscount', {params:{ shopid:this.shopid}}).then((response) => {
           if (response.data && response.data.code > 0) {
             this.shopdata = response.data.list;
-            this.datelist = [];
             for(let i=0;this.shopdata[0].discountdata[i];i++){
               this.datelist.push({
                 date:this.shopdata[0].discountdata[i].date
@@ -315,7 +316,7 @@ export default {
         this.$message.error('折扣力度格式错误');
         return false;
       }
-      const params = { shopid:this.shopid,date:this.currentdate,slotid:this.currenttimeslot.slotid,discount:dishid+'|1@'+num/10 }
+      const params = { shopid:this.fontshopid,date:this.currentdate,slotid:this.currenttimeslot.slotid,discount:dishid+'|1@'+num/10 }
       ajax.get('/admin/shop/addDineshopDiscount', {params:params}).then((response) => {
         if (response.data && response.data.code > 0) {
           this.inputdialogvisible = false;

@@ -36,11 +36,8 @@ export default {
           const info = response.data.info;
           this.$store.dispatch('setUserLogin', {userck:info.ck, userid:info.uid}).then(() => {
             //门店用户取对应门店信息
-            if(info.uid != 10001){
-              this.getShopinfo(info.uid);
-            }else{
-              this.$router.push('/');
-            }
+            this.getShopinfo(info.uid);
+            this.$router.push('/');
           });
         } else {
           return this.$message.error(response.data.msg);

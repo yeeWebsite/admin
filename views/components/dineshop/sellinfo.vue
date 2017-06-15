@@ -74,7 +74,7 @@
       <el-form ref="addselldata" :model="addselldata" label-width="80px" label-position="right">
         <el-form-item label="桌型选择:">
           <el-select v-model="addselldata.tableid" placeholder="请选择">
-            <el-option v-for="table in tablelist" :key="table.id" :label="table.seatnum+'人桌（总数：'+table.desknum+'已定：'+table.ordernum+'）'" :value="table.id" :disabled="checkHasDish(currenttimeslot.slotid, currentdate, table.id)"></el-option>
+            <el-option v-for="table in tablelist" :key="table.deskid" :label="table.seatnum+'人桌（总数：'+table.desknum+'已定：'+table.ordernum+'）'" :value="table.deskid" :disabled="checkHasDish(currenttimeslot.slotid, currentdate, table.deskid)"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="放号:">
@@ -124,6 +124,7 @@ export default {
     return {
       search: "",
       shopid: "",
+      fontshopid: "",
       shopname: "",
       tablelist: [],
       activename: 'sellinfo',
@@ -164,6 +165,7 @@ export default {
           if (response.data && response.data.code > 0) {
             const info = response.data.info;
             this.shopid = info.id;
+            this.fontshopid = info.fontshopid;
             this.shopname = info.shopname;
             this.getDineshopSell();
             this.getTableInfo();
@@ -177,8 +179,9 @@ export default {
     },
     //获取店铺桌型信息
     getTableInfo(){
+      this.tablelist = [];
       if(this.shopid){
-        ajax.get('/admin/shop/getDesklist', {params:{ shopid:this.shopid, indicator:{async:true} }}).then((response) => {
+        ajax.get('/admin/shop/getDesklist', {params:{ shopid:this.fontshopid, indicator:{async:true} }}).then((response) => {
           if (response.data && response.data.code > 0) {
             this.tablelist = response.data.list;
           } else {
@@ -191,8 +194,9 @@ export default {
     },
     //获取放号信息
     getDineshopSell(){
+      this.shopdata = [];
       if(this.shopid){
-        ajax.get('/admin/shop/getDineshopSell', {params:{ shopid:this.shopid}}).then((response) => {
+        ajax.get('/admin/shop/getDineshopSell', {params:{ shopid:this.fontshopid}}).then((response) => {
           if (response.data && response.data.code > 0) {
             this.shopdata = response.data.list;
             this.datelist = [];
@@ -328,7 +332,7 @@ export default {
         return false;
       }
       for (var i = 0; i < this.tablelist.length; i++) {
-        if(this.tablelist[i].id == tableid){
+        if(this.tablelist[i].deskid == tableid){
           const desknum = parseInt(this.tablelist[i].desknum); //桌型总数
           const ordernum = parseInt(this.tablelist[i].ordernum); //已预订数量
           if(openum > desknum - ordernum){
@@ -338,7 +342,7 @@ export default {
           break;
         }
       }
-      const params = { shopid:this.shopid,date:this.currentdate,slotid:this.currenttimeslot.slotid,sellinfo:tableid+'@'+openum };
+      const params = { shopid:this.fontshopid,date:this.currentdate,slotid:this.currenttimeslot.slotid,sellinfo:tableid+'@'+openum };
       ajax.get('/admin/shop/addDineshopSell', {params:params}).then((response) => {
         if (response.data && response.data.code > 0) {
           this.inputdialogvisible = false;

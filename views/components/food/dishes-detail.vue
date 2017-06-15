@@ -88,8 +88,9 @@
           tastesid: [], //口味ID
           cuisineid: '', //菜系ID
           classid: '', //分类ID
-	  salenum:0, //菜肴月销量
+          salenum:0, //菜肴月销量
           shopid: '', //所属店铺
+          fontshopid: '', //所属店铺
           shopname: '', //所属店铺
         },
         rules: {
@@ -121,6 +122,20 @@
           this.$message.error(e.toString());
         });
       },
+      getDineshopInfo(shopid){
+        if(shopid){
+          ajax.get('/admin/shop/getDineshopInfo', {params:{ shopid:shopid, indicator:{async:true} }}).then((response) => {
+            if (response.data && response.data.code > 0) {
+              const info = response.data.info;
+              this.shopinfo.fontshopid = info.fontshopid;
+            } else {
+              this.$message.error(response.data.msg);
+            }
+          }).catch((e) => {
+            this.$message.error(e.toString());
+          });
+        }
+      },
       getDishinfo(){
         ajax.get('/admin/dishes/getDishesInfo', { params: {dishid: this.dishinfo.dishid} }).then((response) => {
           if (response.data && response.data.code > 0) {
@@ -134,7 +149,8 @@
             this.dishinfo.tastesid = info.tastesid.split(','); //口味ID
             this.dishinfo.cuisineid = info.cuisineid; //菜系ID
             this.dishinfo.classid = info.classid; //分类ID
-	    this.dishinfo.salenum = info.salenum;//月销量
+            this.dishinfo.salenum = info.salenum;//月销量
+            this.dishinfo.fontshopid = info.fontshopid;//店铺ID
           } else {
             this.$message.error(response.data.msg);
           }
@@ -160,7 +176,7 @@
               cuisineid: this.dishinfo.cuisineid, //菜系ID
               classid: this.dishinfo.classid, //分类ID
               shopid: this.shopinfo.fontshopid, //所属店铺 添加到前端，则这里显示的是前端店铺ID
-	      salenum: this.dishinfo.salenum,//月销量
+              salenum: this.dishinfo.salenum,//月销量
               indicator: {async:true}
             };
             ajax.get('/admin/dishes/addDishes', { params: params }).then((response) => {
@@ -206,7 +222,10 @@
         this.dishinfo.dishid = query.dishid;
         this.getDishinfo();
       }
-      if(query.shopid) this.dishinfo.shopid = query.shopid;
+      if(query.shopid) {
+        this.dishinfo.shopid = query.shopid;
+        this.getDineshopInfo(query.shopid);
+      }
       if(query.shopname) this.dishinfo.shopname = query.shopname;
     },
     destroyed(){

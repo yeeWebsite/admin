@@ -6,6 +6,11 @@
       <el-col :span="20">
         <breadtitleComponent></breadtitleComponent>
         <!-- 页面输入内容 -->
+        <el-row type="flex">
+          <el-col :span="24" class="searchbox">
+            <span style="color: #FF4949; margin-left:20px; line-height:36px;">菜肴分类信息管理请谨慎删除，可能影响现有数据显示</span>
+          </el-col>
+        </el-row>
         <el-row>
           <el-col :span="7" v-for="(el, index) in list" :offset="index > 0 ? 1 : 0">
             <el-card class="box-card">

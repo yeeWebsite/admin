@@ -11,9 +11,11 @@
             输入店铺ID或店铺名：<el-input class="searchinput" placeholder="店铺ID或店铺名" icon="search" v-model="shopsearch"></el-input>&nbsp;&nbsp;
             输入订单ID：<el-input class="searchinput" placeholder="订单ID" icon="search" v-model="ordersearch"></el-input>&nbsp;&nbsp;
             <el-button type="primary" :loading="false" @click.stop="searchOrderlist()">搜索</el-button>
+            <el-button type="primary" style="float: right;" @click.stop="getShoplist();showdialog=true;">导出报表</el-button>
           </el-col>
           <el-col :span="24" class="searchbox" v-else>
             <span style="margin-left:20px; line-height:36px;">门店：{{(shopinfo&&shopinfo.shopname)?shopinfo.shopname:'-'}}</span>
+            <el-button type="primary" style="float: right;" @click.stop="showdialog=true;">导出报表</el-button>
           </el-col>
         </el-row>
         <el-table :data="orderlist" :default-sort="{prop:'orderid',order:'descending'}" empty-text="暂无数据..." style="width: 100%" id="loading">
@@ -57,6 +59,28 @@
           </el-table-column>
         </el-table>
         <pageComponent v-if="orderlist.length>0" :page="page" :pagesize="pagesize" :total="allnum" :callback="getCurrentPage"></pageComponent>
+
+        <!-- dialog弹层 -->
+        <el-dialog class="discount-dialog" title="导出订单数据" :visible.sync="showdialog" size="tiny" :close-on-click-modal="false">
+          <div class="deskinfoDialog">
+            <el-form ref="deskform" label-width="120px" label-position="right">
+              <el-form-item v-if="!isysadmin" label="店铺名称">
+                <span>{{shopinfo.shopname}}</span>
+              </el-form-item>
+              <el-form-item v-else label="请选择店铺">
+                <el-select v-model="downshopid" placeholder="请选择店铺">
+                  <el-option v-for="shopinfo in shoplist" :key="shopinfo.fontshopid" :label="shopinfo.shopname" :value="shopinfo.fontshopid" :disabled="false"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="请选择时间段">
+                <el-date-picker v-model="downdaterange" format="yyyy/MM/dd" type="daterange" align="right" placeholder="选择时间段" :picker-options="datePickerOptions"></el-date-picker>
+              </el-form-item>
+            </el-form>
+          </div>
+          <span slot="footer" class="dialog-footer">
+            <el-button size="small" type="primary" @click.stop="downloadList()">确 定</el-button>
+          </span>
+        </el-dialog>
       </el-col>
     </el-row>
   </div>
@@ -102,6 +126,7 @@ export default {
         }]
       },
       //页面data数据源
+      fontshopid: '', 
       shopsearch: '', //店铺搜索
       ordersearch: '', //订单搜索
       page: 1,
@@ -109,11 +134,32 @@ export default {
       allnum: 0,
       orderlist: [],
       distriplist: [],
+      shoplist: [],
+      showdialog: false,
+      downshopid: '',
+      downdaterange: [new Date(new Date().getTime() - 7 * 24 * 3600 * 1000), new Date()]
     }
   },
   methods: {
+    //获取店铺信息
+    getDineshopInfo(shopid){
+      if(shopid){
+        ajax.get('/admin/shop/getDineshopInfo', {params:{ shopid:shopid, indicator:{async:true} }}).then((response) => {
+          if (response.data && response.data.code > 0) {
+            const info = response.data.info;
+            this.fontshopid = info.fontshopid;
+            this.getOrderlist();
+          } else {
+            this.$message.error(response.data.msg);
+          }
+        }).catch((e) => {
+          this.$message.error(e.toString());
+        });
+      }
+    },
     searchOrderlist(){
-      this.getOrderlist();
+      this.orderlist = [];
+      this.getDineshopInfo(this.shopsearch);
     },
     getCurrentPage(page){
       this.page = page;
@@ -170,7 +216,7 @@ export default {
     getOrderlist(){
       const startime = timefilter(this.daterange[0], 'yyyy/mm/dd');
       const endtime = timefilter(this.daterange[1], 'yyyy/mm/dd');
-      const params = { startime: startime, endtime: endtime, shopid: this.shopsearch, orderid: this.ordersearch, page: this.page, pagesize: this.pagesize, ordertype:1 };
+      const params = { startime: startime, endtime: endtime, shopid: this.fontshopid, orderid: this.ordersearch, page: this.page, pagesize: this.pagesize, ordertype:1 };
       ajax.get('/admin/order/getOrderlist', {params:params}).then((response) => {
         if (response.data && response.data.code > 0) {
           this.delayLoad(response.data['info'], response.data['list']);
@@ -189,8 +235,8 @@ export default {
           let orderinfo = {};
           orderinfo['showpopover'] = false;
           orderinfo['shopid'] = list[i].shopid;
-	  orderinfo['shopname'] = list[i].shopname;
-	  orderinfo['userid'] = list[i].userid;
+          orderinfo['shopname'] = list[i].shopname;
+          orderinfo['userid'] = list[i].userid;
           orderinfo['orderid'] = list[i].orderid;
           orderinfo['orderdetail'] = this.formatOrderlist(list[i].orderlist);
           orderinfo['addtime'] = list[i].addtime?timefilter(new Date(list[i].addtime), 'yyyy/mm/dd hh:ii:ss'):'';
@@ -209,6 +255,40 @@ export default {
         orderlist.push(order[i].dishesname+' x'+order[i].num);
       }
       return orderlist.join('<br>');
+    },
+    //获取门店列表
+    getShoplist(){
+      this.shoplist = [];
+      const params = { page: 1, pagesize: 10000, indicator:{async: true}};
+      ajax.get('/admin/shop/getDineshopList', {params:params}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          this.shoplist = response.data.list;
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
+    }, 
+    //导出报表
+    downloadList(){
+      if(!this.isysadmin){
+        this.downshopid = this.shopinfo.fontshopid;
+      }
+      const startime = timefilter(this.downdaterange[0], 'yyyy/mm/dd');
+      const endtime = timefilter(this.downdaterange[1], 'yyyy/mm/dd');
+      console.log(startime, endtime, this.downshopid);
+      const params = {shopid: this.downshopid, startime: startime, endtime: endtime};
+      ajax.get('/admin/order/getOrderDownlist', {params:params}).then((response) => {
+        if (response.data && response.data.code > 0) {
+          console.log('success');
+          this.showdialog = false;
+        } else {
+          this.$message.error(response.data.msg);
+        }
+      }).catch((e) => {
+        this.$message.error(e.toString());
+      });
     }
   },
   computed: {
@@ -244,7 +324,5 @@ export default {
 </script>
 
 <style type="text/css">
-.searchinput{width: 200px;}
-.searchbox{padding:12px 6px;margin-bottom: 10px;background-color: #f2f2f2; }
-.searchbox .el-date-editor--timerange{width: 136px;}
+
 </style>
