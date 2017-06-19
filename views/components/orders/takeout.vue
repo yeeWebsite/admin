@@ -278,17 +278,9 @@ export default {
       const startime = timefilter(this.downdaterange[0], 'yyyy/mm/dd');
       const endtime = timefilter(this.downdaterange[1], 'yyyy/mm/dd');
       console.log(startime, endtime, this.downshopid);
-      const params = {shopid: this.downshopid, startime: startime, endtime: endtime};
-      ajax.get('/admin/order/getOrderDownlist', {params:params}).then((response) => {
-        if (response.data && response.data.code > 0) {
-          console.log('success');
-          this.showdialog = false;
-        } else {
-          this.$message.error(response.data.msg);
-        }
-      }).catch((e) => {
-        this.$message.error(e.toString());
-      });
+      const params = {shopid: this.downshopid, ordertype: 1, startime: startime, endtime: endtime, indicator:{async: true}};
+      ajax.get('/admin/order/getOrderDownlist', {params:params});
+      this.$message.success('下载中请稍后...');
     }
   },
   computed: {

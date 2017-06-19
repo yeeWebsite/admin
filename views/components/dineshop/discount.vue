@@ -176,14 +176,15 @@ export default {
     },
     //获取折扣信息
     getDineshopDiscount(){
+      this.datelist = [];
       this.shopdata = [];
       if(this.shopid){
         ajax.get('/admin/shop/getDineshopDiscount', {params:{ shopid:this.shopid}}).then((response) => {
           if (response.data && response.data.code > 0) {
             this.shopdata = response.data.list;
-            for(let i=0;this.shopdata[0].discountdata[i];i++){
+            for(let i=0;i<7;i++){
               this.datelist.push({
-                date:this.shopdata[0].discountdata[i].date
+                date:timefilter(new Date().getTime() + i*1000*60*60*24, 'yyyy/mm/dd')
               });
             };
             //解析折扣字段信息
@@ -321,6 +322,7 @@ export default {
         if (response.data && response.data.code > 0) {
           this.inputdialogvisible = false;
           this.getDineshopDiscount();
+          //this.getDineshopInfo(this.shopid);
         } else {
           this.$message.error(response.data.msg);
         }
