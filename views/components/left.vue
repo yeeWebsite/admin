@@ -19,11 +19,11 @@
       <el-menu-item index="/orders/">外卖订单</el-menu-item>
       <el-menu-item index="/orders/eatin/">预售订单</el-menu-item>
     </el-submenu>
-    <el-submenu index="money">
+    <!-- <el-submenu index="money">
       <template slot="title">资金管理</template>
       <el-menu-item index="/money/">押金/余额</el-menu-item>
-      <!-- <el-menu-item index="/money/lucre/">门店收益金</el-menu-item> -->
-    </el-submenu>
+      <el-menu-item index="/money/lucre/">门店收益金</el-menu-item>
+    </el-submenu> -->
     <el-submenu index="user">
       <template slot="title">用户管理</template>
       <el-menu-item index="/user/admin/">门店用户管理</el-menu-item>
