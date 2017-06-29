@@ -48,6 +48,11 @@ export default new router({
               name:'桌型管理',
               path:'deskinfo', //折扣管理
               component: r => require.ensure([], () => r(require('components/dineshop/deskinfo.vue')), 'dineshop')
+            },
+            {
+              name:'推荐门店信息',
+              path:'recomd', //折扣管理
+              component: r => require.ensure([], () => r(require('components/dineshop/recomd.vue')), 'food')
             }
           ]
         },
@@ -75,6 +80,11 @@ export default new router({
               name:'菜肴分类管理',
               path:'classify', //菜肴分类管理
               component: r => require.ensure([], () => r(require('components/food/classify.vue')), 'food')
+            },
+            {
+              name:'推荐菜肴信息',
+              path:'recomdishes', //折扣管理
+              component: r => require.ensure([], () => r(require('components/food/dishes-recom.vue')), 'food')
             }
           ]
         },
