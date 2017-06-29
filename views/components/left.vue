@@ -8,10 +8,12 @@
         <el-menu-item index="/dineshop/sellinfo/">放号管理</el-menu-item>
         <el-menu-item index="/dineshop/discount/">折扣管理</el-menu-item>
         <el-menu-item index="/dineshop/deskinfo/">桌型管理</el-menu-item>
+        <el-menu-item index="/dineshop/recomd/">推荐店铺信息</el-menu-item>
       </el-menu-item-group>
       <el-menu-item-group index="" title="菜肴管理">
         <el-menu-item index="/food/dishes/">菜肴信息</el-menu-item>
         <el-menu-item index="/food/classify/">菜肴分类管理</el-menu-item>
+        <el-menu-item index="/food/recomdishes/">推荐菜信息</el-menu-item>
       </el-menu-item-group>
     </el-submenu>
     <el-submenu index="orders">
